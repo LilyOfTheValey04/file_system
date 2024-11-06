@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace MyFileSustem
 {
@@ -20,7 +15,7 @@ namespace MyFileSustem
             container.Write(date,0,date.Length);
         }
 
-        //Четене на съдържанието
+        //Четене на съдържанието на даден блок
         public byte[] ReadBlock(FileStream container, int size,int startBlock,int blockSize)
         {
             long blockOffSet = startBlock * blockSize;
