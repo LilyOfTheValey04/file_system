@@ -1,0 +1,15 @@
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.exe
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.deps.json
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.runtimeconfig.json
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.runtimeconfig.dev.json
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.dll
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\bin\Debug\net5.0\MyFileSustem.pdb
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.AssemblyInfoInputs.cache
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.AssemblyInfo.cs
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.csproj.CoreCompileInputs.cache
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.dll
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\refint\MyFileSustem.dll
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.pdb
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.genruntimeconfig.cache
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\ref\MyFileSustem.dll
