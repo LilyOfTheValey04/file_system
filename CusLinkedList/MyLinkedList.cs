@@ -103,7 +103,7 @@ namespace MyFileSustem.CusLinkedList
         }
 
         //// Ако не е намерен елемент, връщаме null
-        public LinkedList<T>FindFirst(Func<T,bool> matchCondition)
+        public LinkedList<T> FindFirstWhich(Func<T,bool> matchCondition)
         {
            LinkedListNode<T> current = head;
             while (current!=null)
@@ -117,6 +117,14 @@ namespace MyFileSustem.CusLinkedList
             return null;// Ако не е намерен елемент, връщаме null
         }
 
+        public T GetFirst()
+        {
+            if (head == null)
+            {
+                throw new InvalidOperationException("Cannot retrieve the first element from an empty list.");
+            }
+            return head.Data;
+        }
         // Копиране на елементите в масивя
         public void CopyTo(T[] array, int arrayIndex)
         {

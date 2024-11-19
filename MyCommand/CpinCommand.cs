@@ -1,5 +1,7 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -33,42 +35,77 @@ namespace MyFileSustem.MyCommand
         public void Execute()
        
         {
-            using (FileStream containerStream = new FileStream(container.ContainerFileAddress, FileMode.Open, FileAccess.Write))
-            using (FileStream sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read)) // Adjusted to read from sourcePath
+            FileStream containerStream = container.GetContainerStream(); // Use shared stream
+
+            // Open the source file
+            using FileStream sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
+
+            // Get file size
+            int fileSize = (int)sourceFileStream.Length;
+            int containerBlockSize = container.BlockSize;
+            int requiredBlocks = (int)Math.Ceiling((double)fileSize/ containerBlockSize);
+
+            // Allocate blocks
+            MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
+            try
             {
-                // Get file size
-                int fileSize = (int)sourceFileStream.Length;
-                int startBlock = container.FindAndMarkFreeBlock();
-                int currentBlock = startBlock;
-
-                // Write the file in chunks to the container
-                byte[] buffer = new byte[container.BlockSize];
-                int bytesRead;
-
-                while ((bytesRead = sourceFileStream.Read(buffer, 0, buffer.Length)) > 0)
+                for (int i = 0; i < requiredBlocks; i++)
                 {
-                    fileBlockManager.WriteBlock(containerStream, buffer, currentBlock, container.BlockSize);
-                    currentBlock = container.FindAndMarkFreeBlock();
+                    int freeBlock = bitmap.FindFirstFreeBlock();
+                    if (freeBlock==-1)
+                    {
+                        throw new Exception("Not enought space in the container");
+                    }
+                    bitmap.MarkBlockAsFree(freeBlock);
+                    allocatedBlocks.AddFirst(freeBlock);
                 }
+                // Write file data into the container
+                byte[] buffer = new byte[containerBlockSize];
+                int bytesRead=0;
+                int currentBlockIndex = 0;
 
-                // Запис на метаданните след битмапа и преди съдържанието
-                long metadataPosition = container.MetadataOffset;
+                foreach (int blockIndex in allocatedBlocks) 
+                { 
+                    long blockOffSet=container.DataOffset + blockIndex*containerBlockSize;
+                    containerStream.Seek(blockOffSet, SeekOrigin.Begin );
+                    bytesRead = containerStream.Read(buffer, 0, buffer.Length);
+                    if (bytesRead>0)
+                    {
+                        containerStream.Write(buffer,0,buffer.Length);
+                    }
+                    currentBlockIndex++;
+
+                }
+                // Write metadata
 
                 // Initialize metadata with constructor and write to container
+                long metadataPosition = container.MetadataOffset;
+
+
                 metadata = new Metadata(
                     fileName: containerFileName,
                     fileLocation: sourcePath,
                     fileDateTime: DateTime.Now,
                     fileSize: fileSize,
                     metadataOffset: metadataPosition,
-                    blockPosition: startBlock
+                    blockPosition: allocatedBlocks.GetFirst()
                 );
 
-                metadataManager.MetadataWriter(containerStream,metadata);
+                metadataManager.MetadataWriter(containerStream, metadata);
+
+                Console.WriteLine($"File '{containerFileName}' added successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during cpin execution: {ex.Message}");
+                // Rollback changes
+                foreach (int blockIndex in allocatedBlocks)
+                {
+                    bitmap.MarkBlockAsFree(blockIndex);
+                }
+                throw; // Rethrow to notify callers
             }
         }
-
-
 
         public void Undo()
         {
@@ -79,4 +116,5 @@ namespace MyFileSustem.MyCommand
         }
     }
     }
+    
 
