@@ -13,3 +13,4 @@ C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\refint\MyF
 C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.pdb
 C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.genruntimeconfig.cache
 C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\ref\MyFileSustem.dll
+C:\Users\User\source\repos\MyFileSustem\MyFileSustem\obj\Debug\net5.0\MyFileSustem.sourcelink.json

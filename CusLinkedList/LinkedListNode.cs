@@ -5,18 +5,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyFileSustem
+namespace MyFileSustem.CusLinkedList
 {
-    internal class LinkedListNode<T> 
+    public class LinkedListNode<T>
     {
         public T Data;
         public LinkedListNode<T> Next;
 
-        public LinkedListNode(T data) {
+        public LinkedListNode(T data)
+        {
             Data = data;
             Next = null;
+
         }
 
-      
     }
 }

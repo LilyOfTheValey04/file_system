@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MyFileSustem.Test
 {
-    internal class Tester
+   /* internal class Tester
     {
         public static void TestCreateContainer()
         {
@@ -100,15 +100,15 @@ namespace MyFileSustem.Test
             {
                 Console.WriteLine("No free block found.");
             }
-        }*/
+        }
 
         public static void RunAllTests()
         {
             TestCreateContainer();
             TestOpenContainer();
             //TestBitmapOperations();
-        }
+        }*/
     }
-}
+
     
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyFileSustem
@@ -11,73 +12,75 @@ namespace MyFileSustem
     {
         //Този клас управлява информацията за файловете и папките 
 
-        public const int MetadataSize = 512;
-
-        public string FileName { get; set; }
-        public string FileLocation {  get; set; }
-        public DateTime FileDateTime { get; set; }
-        public int FileSize { get; set; }
-
-        public int BlockPosition { get; set; }
-     
-
         // Запис на метаданни във файловата система
-        public void MetadataWriter (FileStream container, long offSet)
+        public void MetadataWriter(FileStream container, Metadata metadata)
         {
             //offset represent the position in the steam where writing begins
             // using makes sure that the BinaryWriter is properly disposed of once it goes out of scope
             using (BinaryWriter binaryWriter = new BinaryWriter(container))
             {
-                container.Seek(offSet, SeekOrigin.Begin);
-                binaryWriter.Write(FileName);
-                binaryWriter.Write(FileLocation);
-                binaryWriter.Write(FileDateTime.Ticks);// convert DateTime to long(Ticks) and writes
-                binaryWriter.Write(FileSize);
-                binaryWriter.Write(BlockPosition);
+                container.Seek(metadata.MetadataOffset, SeekOrigin.Begin);
+                binaryWriter.Write(metadata.FileName);
+                binaryWriter.Write(metadata.FileLocation);
+                binaryWriter.Write(metadata.FileDateTime.Ticks);// convert DateTime to long(Ticks) and writes
+                binaryWriter.Write(metadata.FileSize);
+                binaryWriter.Write(metadata.BlockPosition);
             }
         }
 
         // Четене на метаданни от контейнера
-        public void MetadataReader(FileStream container, long offSet)
+        public Metadata MetadataReader(FileStream container, long offset)
         {
-            using (BinaryReader binaryReader = new BinaryReader(container))
+            container.Seek(offset, SeekOrigin.Begin);
+            using (BinaryReader reader = new BinaryReader(container))
             {
-                container.Seek(offSet, SeekOrigin.Begin);
-                FileName = binaryReader.ReadString();
-                FileLocation = binaryReader.ReadString();
-                long dateTimeTicks = binaryReader.ReadInt64(); // Read the long ticks and convert to DateTime
-                FileDateTime = new DateTime(dateTimeTicks);
-                FileSize = binaryReader.ReadInt32();
-                BlockPosition = binaryReader.ReadInt32();
+                string fileName = reader.ReadString();
+                string fileLocation = reader.ReadString();
+                long dateTimeTicks = reader.ReadInt64();
+                DateTime fileDateTime = new DateTime(dateTimeTicks);
+                int fileSize = reader.ReadInt32();
+                int blockPosition = reader.ReadInt32();
+
+                return new Metadata(fileName, fileLocation, fileDateTime, fileSize, offset, blockPosition);
             }
         }
 
-        //мога ли да използвам този метод на готово
-        public bool Validate()
-        { 
-            if(string.IsNullOrWhiteSpace(FileName))
-            {
-                Console.WriteLine("Invalue name");
-                return false;
-            }
-            if (FileSize<0)
-            {
-                Console.WriteLine("Invalid file size");
-                return false;
-            }
-            return true;
-        }
-
-        public void DisplayMetadata()
+        //този метод е за редакция
+       public int GetTotalMetadataCount(FileStream container,long metadataOffset,int metadataRegionSize)
         {
-            Console.WriteLine($"File name:{FileName}");
-            Console.WriteLine($"File location:{FileLocation}");
-            Console.WriteLine($"File data and time of creation:{FileDateTime}");
-            Console.WriteLine($"File size:{FileSize}");
-            Console.WriteLine($"Block position:{BlockPosition}");
+            //metadataRegionSize-Максималният размер (в байтове) на региона, запазен за метаданните.
+            int count = 0;
+            long currentoffset= metadataOffset;
+
+       //Продължава, докато текущата позиция не достигне края на региона. Това предотвратява излизането извън зададените граници на метаданните.
+            while (currentoffset < metadataRegionSize + metadataOffset)
+            {
+                container.Seek(currentoffset, SeekOrigin.Begin);
+                using (BinaryReader reader = new BinaryReader(container,System.Text.Encoding.Default,true))
+                {
+                    try
+                    {
+                        // Четем първия стринг от метаданните, за да проверим дали има валиден запис
+                        string fileName = reader.ReadString();
+                        if (string.IsNullOrEmpty(fileName))
+                        {
+                            break; // Спираме, ако имаме празен запис (няма повече валидни метаданни)
+                        }
+                        // Увеличаваме брояча за метаданните
+                        count++;
+                        // Придвижваме текущия офсет с размера на една метаданна структура
+                        currentoffset += Metadata.MetadataSize;
+
+                    }
+                    catch (EndOfStreamException)
+                    {
+                        break; // Ако достигнем края на потока, прекратяваме
+                    }
+
+                }
+            }
+            return count;
         }
-
-
     }
 }
 

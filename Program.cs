@@ -1,4 +1,5 @@
-﻿using MyFileSustem.Test;
+﻿using MyFileSustem.MyCommand;
+using MyFileSustem.Test;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,79 +8,65 @@ namespace MyFileSustem
 {
     internal class Program
     {
-
         static void Main(string[] args)
         {
-            // Create a test file path
-            string filePath = "test_metadata.dat";
+            string containerFilePath = "containerFile.bin";
+            MyContainer container = new MyContainer(containerFilePath);
+            MetadataManager metadataManager = new MetadataManager();
+            FileBlockManager blockManager = new FileBlockManager();
+            int countBlocks = container.BlockCount;
+            MyBitMap bitMap = new MyBitMap(countBlocks);
 
-            try
+
+            
+            // Create or load the container
+            if (!File.Exists(containerFilePath))
             {
-                // Step 1: Create and populate original metadata
-                MetadataManager originalMetadata = new MetadataManager
-                {
-                    FileName = "example.txt",
-                    FileLocation = "/documents",
-                    FileDateTime = DateTime.Now,
-                    FileSize = 2048,
-                    BlockPosition = 5
-                };
+                Console.WriteLine("Container file not found. Creating a new container...");
+                container.CreateContainer();
+                Console.WriteLine("Container created successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Container found. Loading...");
+            }
+            container.OpenContainerStream();
 
-                // Step 2: Write the metadata to a file
-                using (FileStream stream = new FileStream(filePath, FileMode.Create))
+            // Initialize command handler
+            CommandInvoker invoker = new CommandInvoker(container, metadataManager, blockManager, bitMap);
+            Console.WriteLine("Welcome to my file system");
+            Console.WriteLine("Enter your commands (type 'exit' to quit)");
+
+            // Command loop
+            while (true)
+            {
+                Console.Write("> ");
+                string input = Console.ReadLine();
+                if (input == null || input.Trim().ToLower() == "exit")
                 {
-                    originalMetadata.MetadataWriter(stream, 0);
+                    Console.WriteLine("Exiting, bye");
+                    break;
                 }
 
-                // Step 3: Read the metadata from the file
-                MetadataManager readMetadata = new MetadataManager();
-                using (FileStream stream = new FileStream(filePath, FileMode.Open))
+                string[] commandArgs = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (commandArgs.Length > 0)
                 {
-                    readMetadata.MetadataReader(stream, 0);
-                }
-
-                // Step 4: Validate and display results
-                bool isWorking = originalMetadata.FileName == readMetadata.FileName &&
-                                 originalMetadata.FileLocation == readMetadata.FileLocation &&
-                                 originalMetadata.FileDateTime == readMetadata.FileDateTime &&
-                                 originalMetadata.FileSize == readMetadata.FileSize &&
-                                 originalMetadata.BlockPosition == readMetadata.BlockPosition;
-
-                if (isWorking)
-                {
-                    Console.WriteLine("Metadata class is working correctly!");
+                    invoker.Execute(commandArgs);
                 }
                 else
                 {
-                    Console.WriteLine("Metadata class is NOT working correctly.");
-                    // Output differences for better debugging
-                    Console.WriteLine($"Expected: {originalMetadata.FileName}, Read: {readMetadata.FileName}");
-                    Console.WriteLine($"Expected: {originalMetadata.FileLocation}, Read: {readMetadata.FileLocation}");
-                    Console.WriteLine($"Expected: {originalMetadata.FileDateTime}, Read: {readMetadata.FileDateTime}");
-                    Console.WriteLine($"Expected: {originalMetadata.FileSize}, Read: {readMetadata.FileSize}");
-                    Console.WriteLine($"Expected: {originalMetadata.BlockPosition}, Read: {readMetadata.BlockPosition}");
-                }
-
-                // Optional: Display the read metadata
-                Console.WriteLine("Read Metadata:");
-                readMetadata.DisplayMetadata();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-            finally
-            {
-                // Clean up: Delete the test file
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
+                    Console.WriteLine("No command entered. Please try again.");
                 }
             }
-            //    Tester.RunAllTests();
-
+            container.CloseContainerStream();
         }
-        }
-
     }
+
+}
+
+
+    
+
+
+    
 

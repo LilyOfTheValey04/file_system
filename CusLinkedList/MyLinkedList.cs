@@ -8,17 +8,17 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyFileSustem.MyLinkedList
+namespace MyFileSustem.CusLinkedList
 {
-    internal class LinkedList<T> : IEnumerable<T>
+    public class MyLinkedList<T> : IEnumerable<T>
     {
         private LinkedListNode<T> head; // the first node in the list
 
-        public LinkedList()
+        public MyLinkedList()
         {
             head = null;
         }
-        
+
         public int Count
         {
             get
@@ -100,6 +100,21 @@ namespace MyFileSustem.MyLinkedList
                 current = current.Next;
             }
             return null;
+        }
+
+        //// Ако не е намерен елемент, връщаме null
+        public LinkedList<T>FindFirst(Func<T,bool> matchCondition)
+        {
+           LinkedListNode<T> current = head;
+            while (current!=null)
+            {
+                if (matchCondition(current.Data))// Ако обектът отговаря на условията
+                {
+
+                }
+                current=current.Next;
+            }
+            return null;// Ако не е намерен елемент, връщаме null
         }
 
         // Копиране на елементите в масивя
@@ -184,22 +199,22 @@ namespace MyFileSustem.MyLinkedList
             LinkedListNode<T> current = head;
             LinkedListNode<T> next = null;
 
-            while (current!=null)
+            while (current != null)
             {
                 next = current.Next; //запазваме връзка към следващия ел за да не го изгубем
                 current.Next = previous; // объръщамe посоката на връзката
                 previous = current;
-                current= next;
+                current = next;
             }
             head = previous;
         }
-    
+
 
         // Итератор за обхождане на списъка
         public IEnumerator<T> GetEnumerator()
         {
             LinkedListNode<T> current = head;
-            while(current!=null)
+            while (current != null)
             {
                 yield return current.Data;
                 current = current.Next;

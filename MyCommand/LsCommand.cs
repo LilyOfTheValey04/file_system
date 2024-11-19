@@ -8,7 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace MyFileSustem.MyCommand
 {
-  /*  public class LsCommand : ICommand
+    public class LsCommand : ICommand
     {
         //Команда за извеждане на съдържанието на контейнера 
         //показва на потребителя имената и размерите на всички файлове и папки в текущата директория
@@ -21,23 +21,38 @@ namespace MyFileSustem.MyCommand
             this.metadataManager = metadataManager;
         }
 
-     /*   public void Execute()
+        public void Execute()
         {
-            using (var fileStream = container.OpenContainer(FileMode.Open))
+            using (FileStream containerStream = new FileStream(container.ContainerFileAddress, FileMode.Open, FileAccess.Read))
             {
-                // Четене и извеждане на метаданните
-                metadataManager.MetadataReader(fileStream, CalculateMetadataOffset());
-                Console.WriteLine($"{metadataManager.FileName}\t{metadataManager.FileSize}B");
+                long metatadaOffset = container.MetadataOffset;
+                int metadataCount = container.BlockCount;
+                Console.WriteLine("Listing files in the container");
+                bool anyFilesFount = false;
+
+                for (int i = 0; i < metadataCount; i++)
+                {
+                    long offset = metatadaOffset + i * Metadata.MetadataSize;
+                    Metadata metadata = metadataManager.MetadataReader(containerStream, offset);
+                    if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
+                    {
+                        metadata.DisplayMetadata();
+                        Console.WriteLine();
+                        anyFilesFount = true;
+                    }
+                }
+                if (!anyFilesFount)
+                {
+                    Console.WriteLine("No files were fount in the container");
+                }
             }
+
         }
 
-        private long CalculateMetadataOffset()
+        public void Undo()
         {
-            // Изчисляване на позицията на метаданните за извеждане
-            return 0; // Примерно, тук трябва да има реална логика
+            Console.WriteLine("Undo operation is not applicable for LsCommand.");
         }
-    }*/
-
-
+    }
 }
 

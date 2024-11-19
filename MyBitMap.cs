@@ -18,6 +18,7 @@ namespace MyFileSustem
             _bitmap = new byte[(size + 7) / 8]; // Initialize the bitmap
         }
 
+        //проверява дали даден блок в контейнера е свободен
         public bool IsBlockFree(int index)
         {
             if (index < 0 || index >= _size)
@@ -46,6 +47,19 @@ namespace MyFileSustem
             }
 
             _bitmap[index / 8] &= (byte)~(1 << (index % 8));
+        }
+
+        public int CountFreeBlocks()
+        {
+            int freeblocks=0;
+            for (int i = 0; i < _size; i++)
+            {
+                if (IsBlockFree(i))
+                {
+                    ++freeblocks;
+                }
+            }
+            return freeblocks;
         }
 
         public int Size => _size;

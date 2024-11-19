@@ -7,90 +7,76 @@ using System.Threading.Tasks;
 
 namespace MyFileSustem.MyCommand
 {
-   /* public class CpinCommand:ICommand
+    public class CpinCommand : ICommand
     {
         //Команда cpin - Копиране на файл в контейнера
         //Копира файл с име aaa.txt от път “C:\” в контейнера.
         //Името на файла в контейнера е bbb.txt. 
-        private string sourcePath;
-        private string destinationFileName;
         private MyContainer container;
         private MetadataManager metadataManager;
-        private BlockManager blockManager;
+        private Metadata metadata;
+        private FileBlockManager fileBlockManager;
         private MyBitMap bitmap;
+        private string sourcePath;
+        private string containerFileName;
 
-        public CpinCommand(MyContainer container, MetadataManager metadataManager, BlockManager blockManager, string sourcePath, string destinationFileName, MyBitMap bitmap)
+        public CpinCommand(MyContainer container, MetadataManager metadataManager, FileBlockManager fileBlockManager, string sourcePath, string containerFileName, MyBitMap bitmap)
         {
             this.container = container;
             this.metadataManager = metadataManager;
-            this.blockManager = blockManager;
+            this.fileBlockManager = fileBlockManager;
             this.sourcePath = sourcePath;
-            this.destinationFileName = destinationFileName;
+            this.containerFileName = containerFileName;
             this.bitmap = bitmap;
         }
 
-       /* public void Execute()
+        public void Execute()
+       
         {
-            // Логиката за копиране на файла в контейнера
-            using (var fileStream = container.OpenContainer(FileMode.Open))
+            using (FileStream containerStream = new FileStream(container.ContainerFileAddress, FileMode.Open, FileAccess.Write))
+            using (FileStream sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read)) // Adjusted to read from sourcePath
             {
-                // Зареждане на файла на порции и запис в контейнера
-                using (var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
+                // Get file size
+                int fileSize = (int)sourceFileStream.Length;
+                int startBlock = container.FindAndMarkFreeBlock();
+                int currentBlock = startBlock;
+
+                // Write the file in chunks to the container
+                byte[] buffer = new byte[container.BlockSize];
+                int bytesRead;
+
+                while ((bytesRead = sourceFileStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    int blockSize = container.BlockSize;
-                    int blockIndex = FindFreeBlock();
-                    if (blockIndex < 0)
-                    {
-                        Console.WriteLine("No free block available in the container.");
-                        return;
-                    }
-                    byte[] buffer = new byte[blockSize];
-                    int bytesRead;
-                    int startingBlockIndex = blockIndex;
-                    while ((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        blockManager.WriteBlock(fileStream, buffer, blockIndex, blockSize);
-                        bitmap.MarkBlockAsUsed(blockIndex); // Маркирай блока като зает
-                        blockIndex++;
-                    }
-
-                    // Запис на метаданните за новия файл
-                    metadataManager.FileName = destinationFileName;
-                    metadataManager.FileSize = (int)sourceStream.Length;
-                    metadataManager.BlockPosition = startingBlockIndex;
-                    metadataManager.MetadataWriter(fileStream, CalculateMetadataOffset());
+                    fileBlockManager.WriteBlock(containerStream, buffer, currentBlock, container.BlockSize);
+                    currentBlock = container.FindAndMarkFreeBlock();
                 }
+
+                // Запис на метаданните след битмапа и преди съдържанието
+                long metadataPosition = container.MetadataOffset;
+
+                // Initialize metadata with constructor and write to container
+                metadata = new Metadata(
+                    fileName: containerFileName,
+                    fileLocation: sourcePath,
+                    fileDateTime: DateTime.Now,
+                    fileSize: fileSize,
+                    metadataOffset: metadataPosition,
+                    blockPosition: startBlock
+                );
+
+                metadataManager.MetadataWriter(containerStream,metadata);
             }
         }
 
-        private int FindFreeBlock()
+
+
+        public void Undo()
         {
-            // Метод за намиране на първия свободен блок в контейнера
-           
-
-            for (int i = 0; i < bitmap.Size; i++)
+            if (metadataManager!=null)
             {
-                if (bitmap.IsBlockFree(i))
-                {
-                    return i; // Връщаме индекса на свободния блок
-                }
-            }
-            return -1; // Няма свободни блокове
-        }
-
-      /*  private long CalculateMetadataOffset()
-        {
-            // Изчисляване на позицията за записа на метаданните
-            // Примерно, тук трябва да има реална логика
-            using (var stream = container.OpenContainer(FileMode.Open))
-            {
-                return stream.Length; // Връщаме текущата дължина на потока
+                container.ReleaseBlock(metadata.BlockPosition);
             }
         }
-
-
-    }*/
-
-
-}
+    }
+    }
 

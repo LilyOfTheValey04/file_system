@@ -3,91 +3,93 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace MyFileSustem.MyCommand
 {
-  /*  public class CpoutCommand : ICommand
+    public class CpoutCommand : ICommand
     {
-        private readonly MyContainer container;
-        private readonly string sourceFileName; // Име на файла в контейнера
-        private readonly string destinationPath; // Пълен път за записа извън контейнера
+        private MyContainer container;
+        private MetadataManager metadataManager;
+        private Metadata fileMetadata;
+        private FileBlockManager fileBlockManager;
+        private MyBitMap bitmap;
+        private string containerFileName;
+        private string destinationPath;
 
-        public CpoutCommand(MyContainer container, string sourceFileName, string destinationPath)
+        public CpoutCommand(MyContainer container, MetadataManager metadataManager, FileBlockManager fileBlockManager, string containerFileName, string destinationPath)
         {
             this.container = container;
-            this.sourceFileName = sourceFileName;
+            this.metadataManager = metadataManager;
+            this.fileBlockManager = fileBlockManager;
+            this.containerFileName = containerFileName;
             this.destinationPath = destinationPath;
         }
 
-       /* public void Execute()
+        public void Execute()
         {
-            using (var stream = container.OpenContainer(FileMode.Open))
+            using (FileStream containerStream = new FileStream(container.ContainerFileAddress,FileMode.Open,FileAccess.Read))
             {
-                // Намерете метаданните за целевия файл
-                var metadata = FindFileMetadata(stream, sourceFileName);
-                if (metadata == null)
+                // Четем метаданните на файла от контейнера
+                fileMetadata= FindMetadataForFile(containerStream,containerFileName);
+                if (fileMetadata == null)
                 {
-                    Console.WriteLine($"File '{sourceFileName}' not found in the container.");
+                    Console.WriteLine("File not found");
                     return;
                 }
 
-                // Създаваме изходен файл във външната файлова система
-                using (var outputFile = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+                // Създаваме поток за запис на изходния файл
+                using (FileStream outputStream= new FileStream(destinationPath,FileMode.Create,FileAccess.Write))
                 {
-                    int remainingBytes = metadata.FileSize;
-                    int startBlock = metadata.BlockPosition;
+                    // Изчисляваме броя на блоковете, необходими за файла
+                    int totalBlocks=(fileMetadata.FileSize+container.BlockSize-1)/container.BlockSize;
+                    int currentBlock = fileMetadata.BlockPosition;
+
                     byte[] buffer = new byte[container.BlockSize];
+                    int remainingBytes = fileMetadata.FileSize;
 
-                    while (remainingBytes > 0)
+                    // Четем и записваме съдържанието на файла блок по блок
+                    for (int i = 0; i < totalBlocks; i++)
                     {
-                        // Определяме колко данни да прочетем в текущия блок
-                        int bytesToRead = Math.Min(remainingBytes, container.BlockSize);
+                        int bytesToRead = Math.Min(container.BlockSize, remainingBytes);
 
-                        // Четем блок данни от контейнера
-                        buffer = ReadBlock(stream, startBlock, bytesToRead);
+                        // Четем блока от контейнера
+                        byte[] fileData = fileBlockManager.ReadBlock(containerStream,bytesToRead,currentBlock,container.BlockSize);
+                        outputStream.Write(fileData, 0, bytesToRead);
 
-                        // Записваме данните в изходния файл
-                        outputFile.Write(buffer, 0, bytesToRead);
-
-                        // Актуализираме оставащите байтове и блока
                         remainingBytes -= bytesToRead;
-                        startBlock++;
+
+                        // Определяме следващия блок, ако има остатъчни данни за четене
+                        if (remainingBytes>0)
+                        {
+                            currentBlock = container.FindAndMarkFreeBlock();
+                        }
                     }
                 }
-
-                Console.WriteLine($"File '{sourceFileName}' successfully copied to '{destinationPath}'.");
+                Console.WriteLine($"File {containerFileName} successfully copied to {destinationPath}");
             }
         }
 
-        private MetadataManager FindFileMetadata(FileStream stream, string fileName)
+        public void Undo()
         {
-            long offset = 0;
-            while (offset < stream.Length)
+            // Тази команда не изисква Undo, защото не променя контейнера.
+            Console.WriteLine("Undo operation is not applicable for CpoutCommand.");
+        }
+        // Помощен метод за намиране на метаданните на файла
+        private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
+        {
+            long metadataOffset = fileMetadata.MetadataOffset;
+            for (int i = 0; i < container.BlockCount; i++)
             {
-                var metadata = new MetadataManager();
-                metadata.MetadataReader(stream, offset);
-
-                if (metadata.FileName == fileName)
+                Metadata metadata=metadataManager.MetadataReader(containerStream,metadataOffset+i*Metadata.MetadataSize);
+                if (metadata != null&&metadata.FileName==fileName) 
                 {
                     return metadata;
                 }
-
-                offset += MetadataManager.MetadataSize;
             }
-
             return null;
         }
-
-        private byte[] ReadBlock(FileStream stream, int blockIndex, int size)
-        {
-            byte[] buffer = new byte[size];
-            long blockOffset = blockIndex * container.BlockSize;
-            stream.Seek(blockOffset, SeekOrigin.Begin);
-            stream.Read(buffer, 0, size);
-            return buffer;
-        }
-
-    }*/
+    }
 }
