@@ -22,12 +22,14 @@ namespace MyFileSustem
         public int BlockCount { get; private set; }
 
         public string ContainerFileAddress { get; private set; }
+        public int MetadataRegionSize { get; private set; }
 
         private readonly MyBitMap _bitmap;
         private readonly MetadataManager _metadataManager;
 
-        private FileStream containerStream;
+        private FileStream stream;
         private int metadataRegionSize;
+        
 
         public MyContainer(string containerFileAddress, int maxFile = 100)
         {
@@ -50,8 +52,8 @@ namespace MyFileSustem
 
         public void CreateContainer()
         {
-            using (FileStream stream = new FileStream(ContainerFileAddress, FileMode.Create, FileAccess.Write))
-            {
+            stream = new FileStream(ContainerFileAddress, FileMode.Create, FileAccess.Write);
+            
                 _bitmap.Serialize(stream); // Записваме битмапа
 
                 // Преместваме позицията на стрийма до началото на областта за метаданни и запълваме с нули
@@ -65,7 +67,7 @@ namespace MyFileSustem
                 {
                     stream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
                 }
-            }
+            
         }
 
         // Отваря контейнера за четене/писане
@@ -79,27 +81,40 @@ namespace MyFileSustem
             {
                 stream.Seek(BitmapOffset, SeekOrigin.Begin);
                 _bitmap.Deserialize(stream);//зареждане на битмата,четем съдържанието му
+                /*if (_bitmap.CountFreeBlocks()==0)
+                {
+                    Console.WriteLine("Debug: No free blocks found in container. Initializing bitmap.");
+                    for (int i = 0; i < _bitmap.Size; i++)
+                    {
+                        _bitmap.MarkBlockAsFree(i);
+                    }
+                }*/
+                if (_bitmap.CountFreeBlocks() == 0)
+                {
+                    Console.WriteLine("Debug: No free blocks, but bitmap deserialized successfully.");
+                    // Consider throwing an error here or verifying the container manually.
+                }
             }
         }
 
         public void OpenContainerStream()
         {
-            containerStream= new FileStream(ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite);
+            stream= new FileStream(ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite);
         }
 
         public void CloseContainerStream()
         {
-            containerStream?.Dispose();
-            containerStream = null;
+            stream?.Close();
+            //containerStream = null;
         }
 
         public FileStream GetContainerStream()
         { 
-            if(containerStream==null)
+            if(stream==null)
             {
                 throw new Exception("the container stream is not open");
             }
-            return containerStream;
+            return stream;
         }
         // Използва се за намиране на свободен блок при запис на нов файл
         public int FindAndMarkFreeBlock()

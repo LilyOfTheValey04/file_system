@@ -26,8 +26,7 @@ namespace MyFileSustem.MyCommand
         public void Execute()
         {
             // Отваряме контейнера за четене и писане
-            using (FileStream containerStream = new FileStream(container.ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite))
-            {
+           FileStream containerStream = container.GetContainerStream();
                 // Намираме метаданните за файла
                 fileMetadata = FindMetadataForFile(containerStream,containerFileName);
 
@@ -57,7 +56,7 @@ namespace MyFileSustem.MyCommand
                 ClearMetadata(containerStream, metadataOffset);
                 Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
 
-            }
+            
         }
 
         public void Undo()

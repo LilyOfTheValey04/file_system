@@ -16,6 +16,10 @@ namespace MyFileSustem
         {
             _size = size;
             _bitmap = new byte[(size + 7) / 8]; // Initialize the bitmap
+            for (int i = 0; i < _size; i++)
+            {
+                MarkBlockAsFree(i);
+            }
         }
 
         //проверява дали даден блок в контейнера е свободен
@@ -77,6 +81,11 @@ namespace MyFileSustem
         {
             container.Seek(0, SeekOrigin.Begin);
             container.Read(_bitmap, 0, _bitmap.Length);
+            Console.WriteLine("Debug: Bitmap deserialized. Checking state:");
+            for (int i = 0; i < _size; i++)
+            {
+                Console.WriteLine($"Block{i}:{IsBlockFree(i)} ? free: used");
+            }
         }
 
         // Find the first free block
@@ -88,6 +97,7 @@ namespace MyFileSustem
                 {
                     if (IsBlockFree(i))
                     {
+                        Console.WriteLine($"Debug: Found free block at index {i}");
                         return i;
                     }
                 }
@@ -97,7 +107,7 @@ namespace MyFileSustem
                     break;
                 }
             }
-
+            Console.WriteLine("Debug: No free blocks found.");
             return -1; // No free block found
         }
     }

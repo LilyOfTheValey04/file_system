@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace MyFileSustem.CusLinkedList
 {
-    public class LinkedListNode<T>
+    public class MyLinkedListNode<T>
     {
         public T Data;
-        public LinkedListNode<T> Next;
+        public MyLinkedListNode<T> Next;
 
-        public LinkedListNode(T data)
+        public MyLinkedListNode(T data)
         {
             Data = data;
             Next = null;

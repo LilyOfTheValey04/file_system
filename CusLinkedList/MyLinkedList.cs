@@ -12,11 +12,14 @@ namespace MyFileSustem.CusLinkedList
 {
     public class MyLinkedList<T> : IEnumerable<T>
     {
-        private LinkedListNode<T> head; // the first node in the list
+        private MyLinkedListNode<T> head; // the first node in the list
+        private MyLinkedListNode<T> tail; // Keep a reference to the last node
+
 
         public MyLinkedList()
         {
             head = null;
+            tail = null; // Initialize tail as null
         }
 
         public int Count
@@ -24,7 +27,7 @@ namespace MyFileSustem.CusLinkedList
             get
             {
                 int count = 0;
-                LinkedListNode<T> current = head;
+                MyLinkedListNode<T> current = head;
                 while (current != null)
                 {
                     count++;
@@ -38,7 +41,7 @@ namespace MyFileSustem.CusLinkedList
 
         public void AddFirst(T item)
         {
-            LinkedListNode<T> newNode = new LinkedListNode<T>(item);
+            MyLinkedListNode<T> newNode = new MyLinkedListNode<T>(item);
             if (head == null)
             {
                 head = newNode;
@@ -53,19 +56,30 @@ namespace MyFileSustem.CusLinkedList
         // Добавяне на нов елемент в края на списъка
         public void AddLast(T item)
         {
-            LinkedListNode<T> newNode = new LinkedListNode<T>(item);
+            /* MyLinkedListNode<T> newNode = new MyLinkedListNode<T>(item);
+             if (head == null)
+             {
+                 head = newNode;
+             }
+             else
+             {
+                 MyLinkedListNode<T> current = head;
+                 while (current.Next != null)
+                 {
+                     current = current.Next;
+                 }
+                 current.Next = newNode;
+             }*/
+            MyLinkedListNode<T> newNode = new MyLinkedListNode<T>(item);
             if (head == null)
             {
                 head = newNode;
+                tail = newNode; // The first node is also the last one
             }
             else
             {
-                LinkedListNode<T> current = head;
-                while (current.Next != null)
-                {
-                    current = current.Next;
-                }
-                current.Next = newNode;
+                tail.Next = newNode; // Add the new node after the last one
+                tail = newNode; // Update tail to the new node
             }
         }
 
@@ -77,7 +91,7 @@ namespace MyFileSustem.CusLinkedList
         // Проверка дали даден елемент съществува
         public bool Contains(T item)
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             while (current != null)
             {
                 if (current.Data.Equals(item))
@@ -88,9 +102,9 @@ namespace MyFileSustem.CusLinkedList
             }
             return false;
         }
-        public LinkedListNode<T> Find(T item)
+        public MyLinkedListNode<T> Find(T item)
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             while (current != null)
             {
                 if (current.Data.Equals(item))
@@ -105,7 +119,7 @@ namespace MyFileSustem.CusLinkedList
         //// Ако не е намерен елемент, връщаме null
         public LinkedList<T> FindFirstWhich(Func<T,bool> matchCondition)
         {
-           LinkedListNode<T> current = head;
+           MyLinkedListNode<T> current = head;
             while (current!=null)
             {
                 if (matchCondition(current.Data))// Ако обектът отговаря на условията
@@ -128,7 +142,7 @@ namespace MyFileSustem.CusLinkedList
         // Копиране на елементите в масивя
         public void CopyTo(T[] array, int arrayIndex)
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             for (int i = arrayIndex; i < array.Length && current != null; i++)
             {
                 array[i] = current.Data;
@@ -150,7 +164,7 @@ namespace MyFileSustem.CusLinkedList
                 return true;
             }
 
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             while (current.Next != null)
             {
                 if (current.Next.Data.Equals(item))
@@ -168,7 +182,7 @@ namespace MyFileSustem.CusLinkedList
 
         public bool RemoveFirst()
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             if (head == null)
             {
                 return false;
@@ -182,7 +196,7 @@ namespace MyFileSustem.CusLinkedList
 
         public bool RemoveLast()
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             if (head == null)
             {
                 return false;
@@ -203,9 +217,9 @@ namespace MyFileSustem.CusLinkedList
 
         public void Reverse()
         {
-            LinkedListNode<T> previous = null;
-            LinkedListNode<T> current = head;
-            LinkedListNode<T> next = null;
+            MyLinkedListNode<T> previous = null;
+            MyLinkedListNode<T> current = head;
+            MyLinkedListNode<T> next = null;
 
             while (current != null)
             {
@@ -221,7 +235,7 @@ namespace MyFileSustem.CusLinkedList
         // Итератор за обхождане на списъка
         public IEnumerator<T> GetEnumerator()
         {
-            LinkedListNode<T> current = head;
+            MyLinkedListNode<T> current = head;
             while (current != null)
             {
                 yield return current.Data;

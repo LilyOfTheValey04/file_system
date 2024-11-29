@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace MyFileSustem
 {
     public class FileBlockManager
     {
         //Този клас управлява блоковете от данни
+        private MyContainer Container {  get; set; }
 
         // Запис на съдържание във файл
         public  void WriteBlock(FileStream container, byte[] date, int startBlock,int blockSize)
@@ -25,6 +27,18 @@ namespace MyFileSustem
             container.Read(buffer,0,size);
 
             return buffer;
+        }
+
+        public int GetNextBlock(FileStream stream, int currentBlock)
+        {
+            //long nextBlockCurrentOffset = Container.BlockOffset + currentBlock * Container.BlockSize;
+            long nextBlockCurrentOffset = Container.DataOffset+currentBlock*Container.BlockSize+Container.BlockSize - sizeof(int);
+            byte[] buffer = new byte[sizeof(int)];
+            stream.Seek(nextBlockCurrentOffset,SeekOrigin.Begin);
+            stream.Read(buffer,0,buffer.Length);
+
+            return BitConverter.ToInt32(buffer,0);// Връща следващия блок
+
         }
     }
 }

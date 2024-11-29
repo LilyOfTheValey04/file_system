@@ -33,17 +33,14 @@ namespace MyFileSustem.MyCommand
         }
 
         public void Execute()
-       
         {
-            FileStream containerStream = container.GetContainerStream(); // Use shared stream
-
-            // Open the source file
+            FileStream containerStream = container.GetContainerStream();
             using FileStream sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
 
             // Get file size
             int fileSize = (int)sourceFileStream.Length;
             int containerBlockSize = container.BlockSize;
-            int requiredBlocks = (int)Math.Ceiling((double)fileSize/ containerBlockSize);
+            int requiredBlocks = (int)Math.Ceiling((double)fileSize / containerBlockSize);
 
             // Allocate blocks
             MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
@@ -52,48 +49,55 @@ namespace MyFileSustem.MyCommand
                 for (int i = 0; i < requiredBlocks; i++)
                 {
                     int freeBlock = bitmap.FindFirstFreeBlock();
-                    if (freeBlock==-1)
+                    if (freeBlock == -1)
                     {
-                        throw new Exception("Not enought space in the container");
+                        Console.WriteLine("No free blocks available in the container.");
+                        throw new Exception("Not enough space in the container");
                     }
-                    bitmap.MarkBlockAsFree(freeBlock);
+                    bitmap.MarkBlockAsUsed(freeBlock); // Fixed from MarkBlockAsFree to MarkBlockAsUsed
                     allocatedBlocks.AddFirst(freeBlock);
+                    Console.WriteLine($"Block {freeBlock} allocated.");
                 }
+                if (allocatedBlocks.Count==0)
+                {
+                    Console.WriteLine("Debug: Allocation failed. Rolling back.");
+                    throw new Exception("Allocation failed. No blocks were allocated.");
+                }
+
                 // Write file data into the container
                 byte[] buffer = new byte[containerBlockSize];
-                int bytesRead=0;
-                int currentBlockIndex = 0;
+                int bytesRead;
 
-                foreach (int blockIndex in allocatedBlocks) 
-                { 
-                    long blockOffSet=container.DataOffset + blockIndex*containerBlockSize;
-                    containerStream.Seek(blockOffSet, SeekOrigin.Begin );
-                    bytesRead = containerStream.Read(buffer, 0, buffer.Length);
-                    if (bytesRead>0)
+                foreach (int blockIndex in allocatedBlocks)
+                {
+                    long blockOffset = container.DataOffset + blockIndex * containerBlockSize;
+                    containerStream.Seek(blockOffset, SeekOrigin.Begin);
+                    bytesRead = sourceFileStream.Read(buffer, 0, buffer.Length);
+                    if (bytesRead > 0)
                     {
-                        containerStream.Write(buffer,0,buffer.Length);
+                        containerStream.Write(buffer, 0, bytesRead); // Fixed to write only bytesRead
                     }
-                    currentBlockIndex++;
-
                 }
+
                 // Write metadata
-
-                // Initialize metadata with constructor and write to container
-                long metadataPosition = container.MetadataOffset;
-
-
+                //  long metadataPosition = container.MetadataOffset;
+                int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
+                long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
                 metadata = new Metadata(
                     fileName: containerFileName,
                     fileLocation: sourcePath,
                     fileDateTime: DateTime.Now,
                     fileSize: fileSize,
-                    metadataOffset: metadataPosition,
+                    metadataOffset: metadataOffset,
                     blockPosition: allocatedBlocks.GetFirst()
                 );
 
                 metadataManager.MetadataWriter(containerStream, metadata);
+                bitmap.Serialize(containerStream);
 
                 Console.WriteLine($"File '{containerFileName}' added successfully.");
+              
+
             }
             catch (Exception ex)
             {
@@ -103,10 +107,10 @@ namespace MyFileSustem.MyCommand
                 {
                     bitmap.MarkBlockAsFree(blockIndex);
                 }
-                throw; // Rethrow to notify callers
+                throw;
             }
         }
-
+      
         public void Undo()
         {
             if (metadataManager!=null)

@@ -23,32 +23,44 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-            using (FileStream containerStream = new FileStream(container.ContainerFileAddress, FileMode.Open, FileAccess.Read))
-            {
-                long metatadaOffset = container.MetadataOffset;
-                int metadataCount = container.BlockCount;
-                Console.WriteLine("Listing files in the container");
-                bool anyFilesFount = false;
-
-                for (int i = 0; i < metadataCount; i++)
+                try
                 {
-                    long offset = metatadaOffset + i * Metadata.MetadataSize;
-                    Metadata metadata = metadataManager.MetadataReader(containerStream, offset);
-                    if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
+                    // Вземаме потока от контейнера, без да го затваряме
+                    FileStream containerStream = container.GetContainerStream();
+
+                    long metadataOffset = container.MetadataOffset;
+                    int metadataCount = container.BlockCount;
+
+                    Console.WriteLine("Listing files in the container...");
+                    bool anyFilesFound = false;
+
+                    for (int i = 0; i < metadataCount; i++)
                     {
-                        metadata.DisplayMetadata();
-                        Console.WriteLine();
-                        anyFilesFount = true;
+                        long offset = metadataOffset + i * Metadata.MetadataSize;
+                        Metadata metadata = metadataManager.MetadataReader(containerStream, offset);
+
+                        if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
+                        {
+                            metadata.DisplayMetadata();
+                            Console.WriteLine();
+                            anyFilesFound = true;
+                        }
+                        else if (metadata != null)
+                        {
+                            Console.WriteLine($"Warning: Corrupted metadata found at index {i}.");
+                        }
+                    }
+
+                    if (!anyFilesFound)
+                    {
+                        Console.WriteLine("No files were found in the container.");
                     }
                 }
-                if (!anyFilesFount)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("No files were fount in the container");
+                    Console.WriteLine($"Error during 'ls' operation: {ex.Message}");
                 }
-            }
-
         }
-
         public void Undo()
         {
             Console.WriteLine("Undo operation is not applicable for LsCommand.");

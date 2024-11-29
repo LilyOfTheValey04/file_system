@@ -29,6 +29,10 @@ namespace MyFileSustem
             else
             {
                 Console.WriteLine("Container found. Loading...");
+                // Load bitmap from the container
+                Console.WriteLine("Loading bitmap...");
+               
+             //   bitMap.Deserialize(container.GetContainerStream());
             }
             container.OpenContainerStream();
 
