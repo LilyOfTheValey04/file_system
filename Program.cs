@@ -1,7 +1,5 @@
 ﻿using MyFileSustem.MyCommand;
-using MyFileSustem.Test;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace MyFileSustem
@@ -15,10 +13,7 @@ namespace MyFileSustem
             MetadataManager metadataManager = new MetadataManager();
             FileBlockManager blockManager = new FileBlockManager();
             int countBlocks = container.BlockCount;
-            MyBitMap bitMap = new MyBitMap(countBlocks);
 
-
-            
             // Create or load the container
             if (!File.Exists(containerFilePath))
             {
@@ -31,13 +26,13 @@ namespace MyFileSustem
                 Console.WriteLine("Container found. Loading...");
                 // Load bitmap from the container
                 Console.WriteLine("Loading bitmap...");
-               
-             //   bitMap.Deserialize(container.GetContainerStream());
+
+                //   bitMap.Deserialize(container.GetContainerStream());
             }
             container.OpenContainerStream();
 
             // Initialize command handler
-            CommandInvoker invoker = new CommandInvoker(container, metadataManager, blockManager, bitMap);
+            CommandInvoker invoker = new CommandInvoker(container, metadataManager, blockManager, container._bitmap);
             Console.WriteLine("Welcome to my file system");
             Console.WriteLine("Enter your commands (type 'exit' to quit)");
 
@@ -65,12 +60,11 @@ namespace MyFileSustem
             container.CloseContainerStream();
         }
     }
-
 }
 
 
-    
 
 
-    
+
+
 

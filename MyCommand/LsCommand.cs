@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MyFileSustem.MyCommand
 {
@@ -23,44 +18,48 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-                try
+            try
+            {
+                // Вземаме потока от контейнера, без да го затваряме
+                FileStream containerStream = container.GetContainerStream();
+
+                long metadataOffset = container.MetadataOffset;
+                int metadataCount = container.BlockCount;
+                //  int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
+
+                Console.WriteLine("Listing files in the container...");
+                bool anyFilesFound = false;
+
+                for (int i = 0; i < metadataCount; i++)
                 {
-                    // Вземаме потока от контейнера, без да го затваряме
-                    FileStream containerStream = container.GetContainerStream();
+                    long offset = metadataOffset + i * Metadata.MetadataSize;
 
-                    long metadataOffset = container.MetadataOffset;
-                    int metadataCount = container.BlockCount;
+                    Metadata metadata = metadataManager.ReadMetadata(containerStream, offset);
 
-                    Console.WriteLine("Listing files in the container...");
-                    bool anyFilesFound = false;
-
-                    for (int i = 0; i < metadataCount; i++)
+                    if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
                     {
-                        long offset = metadataOffset + i * Metadata.MetadataSize;
-                        Metadata metadata = metadataManager.MetadataReader(containerStream, offset);
-
-                        if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
-                        {
-                            metadata.DisplayMetadata();
-                            Console.WriteLine();
-                            anyFilesFound = true;
-                        }
-                        else if (metadata != null)
-                        {
-                            Console.WriteLine($"Warning: Corrupted metadata found at index {i}.");
-                        }
+                        Console.WriteLine($"Found file: {metadata.FileName}, Size: {metadata.FileSize}");
+                        metadata.DisplayMetadata();
+                        Console.WriteLine();
+                        anyFilesFound = true;
                     }
-
-                    if (!anyFilesFound)
+                    else if (metadata != null)
                     {
-                        Console.WriteLine("No files were found in the container.");
+                        Console.WriteLine($"Warning: Corrupted metadata found at index {i}.");
                     }
                 }
-                catch (Exception ex)
+
+                if (!anyFilesFound)
                 {
-                    Console.WriteLine($"Error during 'ls' operation: {ex.Message}");
+                    Console.WriteLine("No files were found in the container.");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during 'ls' operation: {ex.Message}");
+            }
         }
+
         public void Undo()
         {
             Console.WriteLine("Undo operation is not applicable for LsCommand.");

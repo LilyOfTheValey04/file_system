@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace MyFileSustem.CusLinkedList
 {
     public class MyLinkedListNode<T>
@@ -16,7 +10,6 @@ namespace MyFileSustem.CusLinkedList
         {
             Data = data;
             Next = null;
-
         }
 
     }

@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace MyFileSustem.CusLinkedList
 {
@@ -56,20 +51,6 @@ namespace MyFileSustem.CusLinkedList
         // Добавяне на нов елемент в края на списъка
         public void AddLast(T item)
         {
-            /* MyLinkedListNode<T> newNode = new MyLinkedListNode<T>(item);
-             if (head == null)
-             {
-                 head = newNode;
-             }
-             else
-             {
-                 MyLinkedListNode<T> current = head;
-                 while (current.Next != null)
-                 {
-                     current = current.Next;
-                 }
-                 current.Next = newNode;
-             }*/
             MyLinkedListNode<T> newNode = new MyLinkedListNode<T>(item);
             if (head == null)
             {
@@ -117,16 +98,16 @@ namespace MyFileSustem.CusLinkedList
         }
 
         //// Ако не е намерен елемент, връщаме null
-        public LinkedList<T> FindFirstWhich(Func<T,bool> matchCondition)
+        public LinkedList<T> FindFirstWhich(Func<T, bool> matchCondition)
         {
-           MyLinkedListNode<T> current = head;
-            while (current!=null)
+            MyLinkedListNode<T> current = head;
+            while (current != null)
             {
                 if (matchCondition(current.Data))// Ако обектът отговаря на условията
                 {
 
                 }
-                current=current.Next;
+                current = current.Next;
             }
             return null;// Ако не е намерен елемент, връщаме null
         }

@@ -1,12 +1,7 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace MyFileSustem.MyCommand
 {
@@ -31,10 +26,10 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-            FileStream containerStream = container.GetContainerStream();
 
-            try {
-                // Четем метаданните на файла от контейнера
+            FileStream containerStream = container.GetContainerStream();
+            try
+            {
                 fileMetadata = FindMetadataForFile(containerStream, containerFileName);
                 if (fileMetadata == null)
                 {
@@ -42,56 +37,34 @@ namespace MyFileSustem.MyCommand
                     return;
                 }
 
-                // Създаваме поток за запис на изходния файл
-                using (FileStream outputStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+                FileStream outputStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write);
+                MyLinkedList<int> fileBlocks = BuildBlockLinkedList(containerStream, fileMetadata.BlockPosition);
+
+                byte[] buffer = new byte[container.BlockSize];
+                int remainingBytes = fileMetadata.FileSize;
+
+                foreach (int blockIndex in fileBlocks)
                 {
-                    MyLinkedList<int> fileBlocks= new MyLinkedList<int>();
-                    // Изчисляваме броя на блоковете, необходими за файла
-                    int totalBlocks = (fileMetadata.FileSize + container.BlockSize - 1) / container.BlockSize;
-                    int currentBlock = fileMetadata.BlockPosition;
+                    long blockOffset = container.DataOffset + blockIndex * container.BlockSize;
+                    containerStream.Seek(blockOffset, SeekOrigin.Begin);
 
-                    byte[] buffer = new byte[container.BlockSize];
-                    int remainingBytes = fileMetadata.FileSize;
+                    int bytesToRead = Math.Min(container.BlockSize, remainingBytes);
+                    containerStream.Read(buffer, 0, bytesToRead);
+                    outputStream.Write(buffer, 0, bytesToRead);
 
-                    MyLinkedListNode<int> currentNode = fileBlocks.Find(fileBlocks.GetFirst()); 
-
-                    // Четем и записваме съдържанието на файла блок по блок
-                    while(currentNode!=null) 
-                    {
-                        int bytesToRead = Math.Min(container.BlockSize, remainingBytes);
-
-                        // Четем блока от контейнера
-                        long blockOffset = container.DataOffset + currentBlock * container.BlockSize;
-                        containerStream.Seek(blockOffset, SeekOrigin.Begin );
-                        containerStream.Read( buffer, 0, bytesToRead );
-
-                        // Записваме блока в изходния файл
-                        outputStream.Write(buffer, 0, bytesToRead );
-                        remainingBytes-= bytesToRead;
-
-                        // Преминаваме към следващия блок
-                        currentNode = currentNode.Next;
-
-                        /* Определяме следващия блок, ако има остатъчни данни за четене
-                        if (remainingBytes > 0)
-                        {
-                            currentBlock = container.FindAndMarkFreeBlock();
-                            if (currentBlock==-1)
-                            {
-                                throw new Exception("The blocks of the file are corruped or incompleted");
-                            }
-                        }*/
-                    }
+                    remainingBytes -= bytesToRead;
+                    if (remainingBytes <= 0) break;
                 }
-                Console.WriteLine($"File {containerFileName} successfully copied to {destinationPath}");
+
+                Console.WriteLine($"File '{containerFileName}' successfully copied to '{destinationPath}'");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Excetion with executing  cpout commnad: {ex.Message}");
+                Console.WriteLine($"Error during cpout execution: {ex.Message}");
                 throw;
             }
         }
-        
+
 
         public void Undo()
         {
@@ -101,16 +74,16 @@ namespace MyFileSustem.MyCommand
         // Помощен метод за намиране на метаданните на файла
         private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
         {
-
             //long metadataOffset = fileMetadata.MetadataOffset; problem null
-            long metadataOffset = 0;
-                Console.WriteLine($"Searching for file: {fileName}");
+            long metadataOffset = container.MetadataOffset;
+            Console.WriteLine($"Searching for file: {fileName}");
             for (int i = 0; i < container.BlockCount; i++)
             {
-                Metadata metadata = metadataManager.MetadataReader(containerStream, metadataOffset + i * Metadata.MetadataSize);
+                long currentOffset = metadataOffset + i * Metadata.MetadataSize;
+                Metadata metadata = metadataManager.ReadMetadata(containerStream, currentOffset);
                 // Логване на всеки опит за намиране на метаданни
                 // Console.WriteLine($"Checking metadata at offset: {metadataOffset + i * Metadata.MetadataSize}");
-                if (metadata != null&&metadata.FileName==fileName) 
+                if (metadata != null && metadata.FileName == fileName)
                 {
                     Console.WriteLine("Metadata found for file: " + fileName);
                     return metadata;
@@ -118,6 +91,36 @@ namespace MyFileSustem.MyCommand
             }
             return null;
         }
+        /*  private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
+          {
+              long metadataOffset = container.MetadataOffset; // Начало на метаданните
+              Console.WriteLine($"Searching for file: {fileName}");
+
+              for (int i = 0; i < container.BlockCount; i++)
+              {
+                  // Изчисляване на текущия offset за четене
+                    long currentOffset = metadataOffset + i * Metadata.MetadataSize;
+
+                  Metadata metadata = metadataManager.ReadMetadata(containerStream, currentOffset);
+
+                  // Проверка на валидността на метаданните
+                  if (metadata == null || string.IsNullOrWhiteSpace(metadata.FileName))
+                  {
+                      continue; // Пропуснете празните записи
+                  }
+
+                  Console.WriteLine($"Checking metadata at offset: {currentOffset}");
+                  if (string.Equals(metadata.FileName.Trim(), fileName.Trim(), StringComparison.OrdinalIgnoreCase))
+                  {
+                      Console.WriteLine("Metadata found for file: " + fileName);
+                      return metadata;
+                  }
+              }
+
+              Console.WriteLine("Metadata not found for file: " + fileName);
+              return null; // Ако не е намерен файлът
+          }*/
+
 
         /// <summary>
         /// Създава свързан списък от блоковете на файла, започвайки от началния блок.
@@ -127,12 +130,12 @@ namespace MyFileSustem.MyCommand
             MyLinkedList<int> blockList = new MyLinkedList<int>();
             int currentBlock = startBlock;
 
-            while (currentBlock!=-1) 
+            while (currentBlock != -1)
             {
                 blockList.AddLast(currentBlock);// Добавяме текущия блок в списъка
 
                 // Четем следващия блок от текущия блок
-                currentBlock= fileBlockManager.GetNextBlock(stream,currentBlock);
+                currentBlock = fileBlockManager.GetNextBlock(stream, currentBlock);
             }
             return blockList;
         }

@@ -1,18 +1,13 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyFileSustem
 {
     public class MyContainer
     {
+
         //Този клас създава и управлява контейнера
-        // private const  string containerFileAdress = "filesystem.bin";//името на файла който представлява контейнера 
         // Константи за размера и броя на блоковете по подразбиране
 
         public const int DefaultBlockSize = 1024;
@@ -24,14 +19,14 @@ namespace MyFileSustem
         public string ContainerFileAddress { get; private set; }
         public int MetadataRegionSize { get; private set; }
 
-        private readonly MyBitMap _bitmap;
+        public MyBitMap _bitmap;
         private readonly MetadataManager _metadataManager;
 
         private FileStream stream;
         private int metadataRegionSize;
-        
 
-        public MyContainer(string containerFileAddress, int maxFile = 100)
+
+        public MyContainer(string containerFileAddress, int maxFile = 1024)
         {
             ContainerFileAddress = containerFileAddress;
             BlockSize = DefaultBlockSize;
@@ -53,42 +48,29 @@ namespace MyFileSustem
         public void CreateContainer()
         {
             stream = new FileStream(ContainerFileAddress, FileMode.Create, FileAccess.Write);
-            
-                _bitmap.Serialize(stream); // Записваме битмапа
 
-                // Преместваме позицията на стрийма до началото на областта за метаданни и запълваме с нули
-                stream.Seek(MetadataOffset, SeekOrigin.Begin);
-                stream.Write(new byte[metadataRegionSize], 0, metadataRegionSize);
+            _bitmap.Serialize(stream); // Записваме битмапа
 
-                // Записваме празни блокове след метаданите
-                stream.Seek(DataOffset, SeekOrigin.Begin);
-                byte[] emptyBlock = new byte[BlockSize];
-                for (int i = 0; i < BlockCount; i++)
-                {
-                    stream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
-                }
-            
+            // Преместваме позицията на стрийма до началото на областта за метаданни и запълваме с нули
+            stream.Seek(MetadataOffset, SeekOrigin.Begin);
+            stream.Write(new byte[metadataRegionSize], 0, metadataRegionSize);
+
+            // Записваме празни блокове след метаданите
+            stream.Seek(DataOffset, SeekOrigin.Begin);
+            byte[] emptyBlock = new byte[BlockSize];
+            for (int i = 0; i < BlockCount; i++)
+            {
+                stream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
+            }
         }
 
-        // Отваря контейнера за четене/писане
-        /*  public FileStream OpenContainer(FileMode mode)
-          {
-              return new FileStream(ContainerFileAdress,mode, FileAccess.ReadWrite);
-          }*/
         public void OpenContainer(FileMode mode)
         {
             using (FileStream stream = new FileStream(ContainerFileAddress, FileMode.Open, FileAccess.ReadWrite))
             {
                 stream.Seek(BitmapOffset, SeekOrigin.Begin);
                 _bitmap.Deserialize(stream);//зареждане на битмата,четем съдържанието му
-                /*if (_bitmap.CountFreeBlocks()==0)
-                {
-                    Console.WriteLine("Debug: No free blocks found in container. Initializing bitmap.");
-                    for (int i = 0; i < _bitmap.Size; i++)
-                    {
-                        _bitmap.MarkBlockAsFree(i);
-                    }
-                }*/
+
                 if (_bitmap.CountFreeBlocks() == 0)
                 {
                     Console.WriteLine("Debug: No free blocks, but bitmap deserialized successfully.");
@@ -99,18 +81,19 @@ namespace MyFileSustem
 
         public void OpenContainerStream()
         {
-            stream= new FileStream(ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite);
+            stream = new FileStream(ContainerFileAddress, FileMode.Open, FileAccess.ReadWrite);
+            stream.Seek(BitmapOffset, SeekOrigin.Begin);
+            _bitmap.Deserialize(stream);
         }
 
         public void CloseContainerStream()
         {
             stream?.Close();
-            //containerStream = null;
         }
 
         public FileStream GetContainerStream()
-        { 
-            if(stream==null)
+        {
+            if (stream == null)
             {
                 throw new Exception("the container stream is not open");
             }
@@ -129,7 +112,6 @@ namespace MyFileSustem
             {
                 throw new InvalidOperationException("No free blocks available in the container.");
             }
-            //return freeBlock;
         }
 
         //Позволява освобождаване на блок, когато файлът бъде изтрит или пренаписан

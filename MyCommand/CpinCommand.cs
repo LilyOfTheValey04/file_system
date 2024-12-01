@@ -1,11 +1,8 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+
 
 namespace MyFileSustem.MyCommand
 {
@@ -34,53 +31,45 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-            FileStream containerStream = container.GetContainerStream();
-            using FileStream sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
 
-            // Get file size
-            int fileSize = (int)sourceFileStream.Length;
-            int containerBlockSize = container.BlockSize;
-            int requiredBlocks = (int)Math.Ceiling((double)fileSize / containerBlockSize);
+            FileStream containerStream = container.GetContainerStream(); // Получаване на потока без using
+            FileStream sourceFileStream = null;
 
-            // Allocate blocks
-            MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
             try
             {
+                sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
+
+                int fileSize = (int)sourceFileStream.Length;
+                int containerBlockSize = container.BlockSize;
+                int requiredBlocks = (int)Math.Ceiling((double)fileSize / containerBlockSize);
+
+                MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
+
+                // Алокация на блокове
                 for (int i = 0; i < requiredBlocks; i++)
                 {
                     int freeBlock = bitmap.FindFirstFreeBlock();
                     if (freeBlock == -1)
                     {
-                        Console.WriteLine("No free blocks available in the container.");
                         throw new Exception("Not enough space in the container");
                     }
-                    bitmap.MarkBlockAsUsed(freeBlock); // Fixed from MarkBlockAsFree to MarkBlockAsUsed
+                    bitmap.MarkBlockAsUsed(freeBlock);
                     allocatedBlocks.AddFirst(freeBlock);
-                    Console.WriteLine($"Block {freeBlock} allocated.");
-                }
-                if (allocatedBlocks.Count==0)
-                {
-                    Console.WriteLine("Debug: Allocation failed. Rolling back.");
-                    throw new Exception("Allocation failed. No blocks were allocated.");
                 }
 
-                // Write file data into the container
                 byte[] buffer = new byte[containerBlockSize];
                 int bytesRead;
 
+                // Записване на данни в блока
                 foreach (int blockIndex in allocatedBlocks)
                 {
                     long blockOffset = container.DataOffset + blockIndex * containerBlockSize;
                     containerStream.Seek(blockOffset, SeekOrigin.Begin);
-                    bytesRead = sourceFileStream.Read(buffer, 0, buffer.Length);
-                    if (bytesRead > 0)
-                    {
-                        containerStream.Write(buffer, 0, bytesRead); // Fixed to write only bytesRead
-                    }
+                    bytesRead = sourceFileStream.Read(buffer, 0, containerBlockSize);
+                    containerStream.Write(buffer, 0, bytesRead);
                 }
 
-                // Write metadata
-                //  long metadataPosition = container.MetadataOffset;
+                // Записване на метаданни
                 int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
                 long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
                 metadata = new Metadata(
@@ -96,29 +85,27 @@ namespace MyFileSustem.MyCommand
                 bitmap.Serialize(containerStream);
 
                 Console.WriteLine($"File '{containerFileName}' added successfully.");
-              
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during cpin execution: {ex.Message}");
-                // Rollback changes
-                foreach (int blockIndex in allocatedBlocks)
-                {
-                    bitmap.MarkBlockAsFree(blockIndex);
-                }
                 throw;
             }
+            finally
+            {
+                // Затваряме изходния файл, но не и контейнера
+                sourceFileStream?.Close();
+            }
         }
-      
+
         public void Undo()
         {
-            if (metadataManager!=null)
+            if (metadataManager != null)
             {
                 container.ReleaseBlock(metadata.BlockPosition);
             }
         }
     }
-    }
-    
+}
+
 

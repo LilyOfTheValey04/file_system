@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace MyFileSustem.MyCommand
 {
@@ -15,7 +12,7 @@ namespace MyFileSustem.MyCommand
         private string containerFileName;
         private Metadata fileMetadata;
 
-        public RmCommand(MyContainer container, MetadataManager metadataManager,FileBlockManager fileBlockManager, string containerFileName)
+        public RmCommand(MyContainer container, MetadataManager metadataManager, FileBlockManager fileBlockManager, string containerFileName)
         {
             this.container = container;
             this.metadataManager = metadataManager;
@@ -26,37 +23,35 @@ namespace MyFileSustem.MyCommand
         public void Execute()
         {
             // Отваряме контейнера за четене и писане
-           FileStream containerStream = container.GetContainerStream();
-                // Намираме метаданните за файла
-                fileMetadata = FindMetadataForFile(containerStream,containerFileName);
+            FileStream containerStream = container.GetContainerStream();
+            // Намираме метаданните за файла
+            fileMetadata = FindMetadataForFile(containerStream, containerFileName);
 
-                if (fileMetadata == null)
+            if (fileMetadata == null)
+            {
+                Console.WriteLine($"Error: File '{containerFileName}' not found in the container.");
+                return;
+            }
+
+            // Определяме броя на блоковете, които заемат съдържанието на файла
+            int totalBlocks = (fileMetadata.FileSize + container.BlockSize - 1) / container.BlockSize;
+            int currentBlock = fileMetadata.BlockPosition;
+
+            // Освобождаваме блоковете, които са свързани с файла
+            for (int i = 0; i < totalBlocks; i++)
+            {
+                container.ReleaseBlock(currentBlock);
+
+                // Определяме следващия блок, ако има останали данни
+                if (i < totalBlocks - 1)
                 {
-                    Console.WriteLine($"Error: File '{containerFileName}' not found in the container.");
-                    return;
+                    currentBlock = container.FindAndMarkFreeBlock();
                 }
-
-                // Определяме броя на блоковете, които заемат съдържанието на файла
-                int totalBlocks = (fileMetadata.FileSize + container.BlockSize - 1) / container.BlockSize;
-                int currentBlock = fileMetadata.BlockPosition;
-
-                // Освобождаваме блоковете, които са свързани с файла
-                for (int i = 0; i < totalBlocks; i++)
-                {
-                    container.ReleaseBlock(currentBlock);
-
-                    // Определяме следващия блок, ако има останали данни
-                    if (i<totalBlocks-1)
-                    {
-                        currentBlock = container.FindAndMarkFreeBlock();
-                    }
-                }
-                // Изтриваме метаданните на файла
-                long metadataOffset = fileMetadata.MetadataOffset;
-                ClearMetadata(containerStream, metadataOffset);
-                Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
-
-            
+            }
+            // Изтриваме метаданните на файла
+            long metadataOffset = fileMetadata.MetadataOffset;
+            ClearMetadata(containerStream, metadataOffset);
+            Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
         }
 
         public void Undo()
@@ -71,7 +66,7 @@ namespace MyFileSustem.MyCommand
 
             for (int i = 0; i < container.BlockCount; i++)
             {
-                Metadata metadata = metadataManager.MetadataReader(containerStream, metadataOffset + i * Metadata.MetadataSize);
+                Metadata metadata = metadataManager.ReadMetadata(containerStream, metadataOffset + i * Metadata.MetadataSize);
 
                 if (metadata != null && metadata.FileName == fileName)
                 {
@@ -87,7 +82,7 @@ namespace MyFileSustem.MyCommand
         {
             byte[] emptyMetadata = new byte[Metadata.MetadataSize];
             containerStream.Seek(offset, SeekOrigin.Begin);
-            containerStream.Write(emptyMetadata,0, emptyMetadata.Length);
+            containerStream.Write(emptyMetadata, 0, emptyMetadata.Length);
         }
     }
 }

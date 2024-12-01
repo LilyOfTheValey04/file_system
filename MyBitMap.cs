@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace MyFileSustem
 {
@@ -20,6 +17,8 @@ namespace MyFileSustem
             {
                 MarkBlockAsFree(i);
             }
+
+
         }
 
         //проверява дали даден блок в контейнера е свободен
@@ -55,7 +54,7 @@ namespace MyFileSustem
 
         public int CountFreeBlocks()
         {
-            int freeblocks=0;
+            int freeblocks = 0;
             for (int i = 0; i < _size; i++)
             {
                 if (IsBlockFree(i))
@@ -74,18 +73,13 @@ namespace MyFileSustem
             container.Seek(0, SeekOrigin.Begin);// Премества указателя за четене/писане в началото на файла.
             container.Write(_bitmap, 0, _bitmap.Length);// Записва съдържанието на масива _bitmap в контейнера.
         }
-    
+
 
         // Deserialize bitmap from container
         public void Deserialize(FileStream container)
         {
             container.Seek(0, SeekOrigin.Begin);
             container.Read(_bitmap, 0, _bitmap.Length);
-            Console.WriteLine("Debug: Bitmap deserialized. Checking state:");
-            for (int i = 0; i < _size; i++)
-            {
-                Console.WriteLine($"Block{i}:{IsBlockFree(i)} ? free: used");
-            }
         }
 
         // Find the first free block
