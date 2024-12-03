@@ -1,12 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace MyFileSustem.MyCommand
 {
     public class LsCommand : ICommand
     {
-        //Команда за извеждане на съдържанието на контейнера 
-        //показва на потребителя имената и размерите на всички файлове и папки в текущата директория
         private MyContainer container;
         private MetadataManager metadataManager;
 
@@ -20,14 +19,17 @@ namespace MyFileSustem.MyCommand
         {
             try
             {
-                // Вземаме потока от контейнера, без да го затваряме
                 FileStream containerStream = container.GetContainerStream();
 
                 long metadataOffset = container.MetadataOffset;
                 int metadataCount = container.MetadataBlockCount;
-                //  int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
 
-                Console.WriteLine("Listing files in the container...");
+                // Начало на таблицата
+                Console.WriteLine();
+                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                Console.WriteLine("|" + PadCenter("File Name", 18) + "|" + PadCenter("Path", 15) + "|" + PadCenter("Date/Time", 20) + "|" + PadCenter("Size", 10) + "|" + PadCenter("Offset", 10) + "|" + PadCenter("Blocks", 20) + "|");
+                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+
                 bool anyFilesFound = false;
 
                 for (int i = 0; i < metadataCount; i++)
@@ -38,14 +40,18 @@ namespace MyFileSustem.MyCommand
 
                     if (metadata != null && !string.IsNullOrWhiteSpace(metadata.FileName))
                     {
-                        Console.WriteLine($"Found file: {metadata.FileName}, Size: {metadata.FileSize}");
-                        metadata.DisplayMetadata();
-                        Console.WriteLine();
                         anyFilesFound = true;
-                    }
-                    else if (metadata != null)
-                    {
-                        Console.WriteLine($"Warning: Corrupted metadata found at index {i}.");
+
+                        // Извеждаме информацията за файла
+                        Console.WriteLine("|" + PadCenter(metadata.FileName, 18) + "|"
+                            + PadCenter("N/A", 15) + "|"
+                            + PadCenter(metadata.FileDateTime.ToString("yyyy-MM-dd HH:mm:ss"), 20) + "|"
+                            + PadCenter(metadata.FileSize.ToString(), 10) + "|"
+                            + PadCenter(metadata.MetadataOffset.ToString(), 10) + "|"
+                            + PadCenter(string.Join(", ", metadata.BlocksPositionsList.Take(20)), 20) + "|");
+
+                        // Разделител след всеки файл
+                        Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
                     }
                 }
 
@@ -64,6 +70,14 @@ namespace MyFileSustem.MyCommand
         {
             Console.WriteLine("Undo operation is not applicable for LsCommand.");
         }
+
+        // Utility method to center-align text within a fixed-width field
+        private string PadCenter(string text, int width)
+        {
+            int padding = width - text.Length;
+            if (padding <= 0) return text.Substring(0, width);
+            int padLeft = padding / 2 + text.Length;
+            return text.PadLeft(padLeft).PadRight(width);
+        }
     }
 }
-

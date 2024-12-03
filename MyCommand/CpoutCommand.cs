@@ -26,6 +26,10 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
+            if (destinationPath != null && !destinationPath.EndsWith(".txt"))
+            {
+                destinationPath += ".txt";
+            }
 
             FileStream containerStream = container.GetContainerStream();
             try
@@ -38,7 +42,7 @@ namespace MyFileSustem.MyCommand
                 }
 
                 FileStream outputStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write);
-                MyLinkedList<int> fileBlocks = BuildBlockLinkedList(containerStream, fileMetadata.BlockPosition);
+                MyLinkedList<int> fileBlocks = fileMetadata.BlocksPositionsList;
 
                 byte[] buffer = new byte[container.FileBlockSize];
                 int remainingBytes = fileMetadata.FileSize;
@@ -91,7 +95,9 @@ namespace MyFileSustem.MyCommand
             }
             return null;
         }
-        /*  private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
+    }
+}
+      /*    private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
           {
               long metadataOffset = container.MetadataOffset; // Начало на метаданните
               Console.WriteLine($"Searching for file: {fileName}");
@@ -119,25 +125,10 @@ namespace MyFileSustem.MyCommand
 
               Console.WriteLine("Metadata not found for file: " + fileName);
               return null; // Ако не е намерен файлът
-          }*/
+          }
 
 
         /// <summary>
         /// Създава свързан списък от блоковете на файла, започвайки от началния блок.
         /// </summary>
-        private MyLinkedList<int> BuildBlockLinkedList(FileStream stream, int startBlock)
-        {
-            MyLinkedList<int> blockList = new MyLinkedList<int>();
-            int currentBlock = startBlock;
-
-            while (currentBlock != -1)
-            {
-                blockList.AddLast(currentBlock);// Добавяме текущия блок в списъка
-
-                // Четем следващия блок от текущия блок
-                currentBlock = fileBlockManager.GetNextBlock(stream, currentBlock);
-            }
-            return blockList;
-        }
-    }
-}
+} */

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using System;
 using System.IO;
 
 namespace MyFileSustem
@@ -141,18 +142,19 @@ namespace MyFileSustem
             }
 
             // Намиране на свободни блокове
-            int[] allocatedBlocks = new int[requiredBlocks];
+            MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
             for (int i = 0; i < requiredBlocks; i++)
             {
-                allocatedBlocks[i] = FindAndMarkFreeBlock();
+                int freeBlock = FindAndMarkFreeBlock();
+                allocatedBlocks.AddLast(freeBlock);
             }
-
+              
             // Записване на файла в контейнера
             using (FileStream containerStream = new FileStream(containerFileName, FileMode.Open, FileAccess.Write))
             {
                 for (int i = 0; i < requiredBlocks; i++)
                 {
-                    int blockIndex = allocatedBlocks[i];
+                    int blockIndex = allocatedBlocks.Find(i).Data;
                     long blockOffset = DataOffset + blockIndex * FileBlockSize;
 
                     //Изчисляваме дължината на данните, които трябва да бъдат записани в текущия блок
@@ -165,13 +167,13 @@ namespace MyFileSustem
                 int metadataCount = _metadataManager.GetTotalMetadataCount(containerStream, MetadataOffset, metadataRegionSize);
                 long metadataOffSet = MetadataOffset + metadataCount * Metadata.MetadataSize;
                 Metadata fileMetadata = new Metadata(
-            fileName: containerFileName,
-            fileLocation: ContainerFileAddress,
-            fileDateTime: DateTime.Now,
-            fileSize: fileSize,
-            metadataOffset: metadataOffSet,
-            blockPosition: allocatedBlocks[0]
-            );
+                    fileName: containerFileName,
+                    fileLocation: ContainerFileAddress,
+                    fileDateTime: DateTime.Now,
+                    fileSize: fileSize,
+                    metadataOffset: metadataOffSet,
+                    blocksPositionsList: allocatedBlocks
+                );
 
                 _metadataManager.MetadataWriter(containerStream, fileMetadata);
             }

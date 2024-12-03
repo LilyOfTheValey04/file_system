@@ -35,22 +35,20 @@ namespace MyFileSustem.MyCommand
 
             // Определяме броя на блоковете, които заемат съдържанието на файла
             int totalBlocks = (fileMetadata.FileSize + container.FileBlockSize - 1) / container.FileBlockSize;
-            int currentBlock = fileMetadata.BlockPosition;
+            int currentBlock = fileMetadata.BlocksPositionsList.GetFirst();
 
             // Освобождаваме блоковете, които са свързани с файла
-            for (int i = 0; i < totalBlocks; i++)
+            foreach (int blockNumber in fileMetadata.BlocksPositionsList)
             {
-                container.ReleaseBlock(currentBlock);
-
-                // Определяме следващия блок, ако има останали данни
-                if (i < totalBlocks - 1)
-                {
-                    currentBlock = container.FindAndMarkFreeBlock();
-                }
+                container.ReleaseBlock(blockNumber);
             }
+
             // Изтриваме метаданните на файла
             long metadataOffset = fileMetadata.MetadataOffset;
             ClearMetadata(containerStream, metadataOffset);
+
+            ClearFileBlocks(containerStream);
+
             Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
         }
 
@@ -83,6 +81,21 @@ namespace MyFileSustem.MyCommand
             byte[] emptyMetadata = new byte[Metadata.MetadataSize];
             containerStream.Seek(offset, SeekOrigin.Begin);
             containerStream.Write(emptyMetadata, 0, emptyMetadata.Length);
+        }
+
+        private void ClearFileBlocks(FileStream containerStream)
+        {
+            foreach (int blockNumber in fileMetadata.BlocksPositionsList)
+            {
+                long blockOffset = container.DataOffset + blockNumber * container.FileBlockSize;
+                containerStream.Seek(blockOffset, SeekOrigin.Begin);
+
+                byte[] emptyBlock = new byte[container.FileBlockSize];
+                containerStream.Write(emptyBlock, 0, emptyBlock.Length);
+
+                container.ReleaseBlock(blockNumber);
+            }
+
         }
     }
 }

@@ -8,7 +8,7 @@ namespace MyFileSustem.CusLinkedList
     public class MyLinkedList<T> : IEnumerable<T>
     {
         private MyLinkedListNode<T> head; // the first node in the list
-        private MyLinkedListNode<T> tail; // Keep a reference to the last node
+        public MyLinkedListNode<T> tail { get; private set; } // Keep a reference to the last node
 
 
         public MyLinkedList()

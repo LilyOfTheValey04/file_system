@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using System;
 
 namespace MyFileSustem
 {
@@ -10,16 +11,16 @@ namespace MyFileSustem
         public DateTime FileDateTime { get; set; }
         public int FileSize { get; set; }
         public long MetadataOffset { get; set; }
-        public int BlockPosition { get; set; }
+        public MyLinkedList<int> BlocksPositionsList { get; set; }
 
-        public Metadata(string fileName, string fileLocation, DateTime fileDateTime, int fileSize, long metadataOffset, int blockPosition)
+        public Metadata(string fileName, string fileLocation, DateTime fileDateTime, int fileSize, long metadataOffset, MyLinkedList<int> blocksPositionsList)
         {
             FileName = fileName;
             FileLocation = fileLocation;
             FileDateTime = fileDateTime;
             FileSize = fileSize;
             MetadataOffset = metadataOffset;
-            BlockPosition = blockPosition;
+            BlocksPositionsList = blocksPositionsList;
         }
 
         //мога ли да използвам този метод на готово
@@ -44,7 +45,31 @@ namespace MyFileSustem
             Console.WriteLine($"File location:{FileLocation}");
             Console.WriteLine($"File data and time of creation:{FileDateTime}");
             Console.WriteLine($"File size:{FileSize}");
-            Console.WriteLine($"Block position:{BlockPosition}");
+            Console.Write("Block positions: [");
+
+            foreach (var position in BlocksPositionsList)
+            {
+                if (position != BlocksPositionsList.tail.Data)
+                {
+                    Console.Write($"{position}, ");
+                }
+                else
+                {
+                    Console.Write($"{position}");
+                }
+            }
+
+            Console.Write("].");
+        }
+
+        public void AddBlock(int blockPosition)
+        {
+            BlocksPositionsList.AddLast(blockPosition);
+        }
+
+        public void RemoveBlock(int blockPosition) 
+        { 
+            BlocksPositionsList.Remove(blockPosition); 
         }
     }
 }

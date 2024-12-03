@@ -42,7 +42,10 @@ namespace MyFileSustem.MyCommand
                 int fileSize = (int)sourceFileStream.Length;
                 int containerBlockSize = container.FileBlockSize;
                 int requiredBlocks = (int)Math.Ceiling((double)fileSize / containerBlockSize);
-
+                if (fileSize == 0)
+                {
+                    requiredBlocks = 1;
+                }
                 MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
 
                 // Алокация на блокове
@@ -54,7 +57,7 @@ namespace MyFileSustem.MyCommand
                         throw new Exception("Not enough space in the container");
                     }
                     bitmap.MarkBlockAsUsed(freeBlock);
-                    allocatedBlocks.AddFirst(freeBlock);
+                    allocatedBlocks.AddLast(freeBlock);
                 }
 
                 byte[] buffer = new byte[containerBlockSize];
@@ -78,7 +81,7 @@ namespace MyFileSustem.MyCommand
                     fileDateTime: DateTime.Now,
                     fileSize: fileSize,
                     metadataOffset: metadataOffset,
-                    blockPosition: allocatedBlocks.GetFirst()
+                    allocatedBlocks
                 );
 
                 metadataManager.MetadataWriter(containerStream, metadata);
@@ -102,7 +105,10 @@ namespace MyFileSustem.MyCommand
         {
             if (metadataManager != null)
             {
-                container.ReleaseBlock(metadata.BlockPosition);
+                foreach (int current in metadata.BlocksPositionsList)
+                {
+                    container.ReleaseBlock(current);
+                }
             }
         }
     }

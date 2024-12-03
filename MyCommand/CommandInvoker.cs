@@ -70,7 +70,7 @@ namespace MyFileSustem.MyCommand
             string containerFileName = args[2];
             ICommand cpinCommand = new CpinCommand(container, metadataManager, fileBlockManager, sourcePath, containerFileName, bitMap);
             cpinCommand.Execute();
-        }
+        } 
 
         private void ExecuteCpout(string[] args)  // Поправено от "ExecuteCpon" на "ExecuteCpout"
         {

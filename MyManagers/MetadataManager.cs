@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using System;
 using System.IO;
 
 namespace MyFileSustem
@@ -27,7 +28,12 @@ namespace MyFileSustem
             binaryWriter.Write(metadata.FileLocation);
             binaryWriter.Write(metadata.FileDateTime.Ticks);// convert DateTime to long(Ticks) and writes
             binaryWriter.Write(metadata.FileSize);
-            binaryWriter.Write(metadata.BlockPosition);
+            // Запис на списъка с блокове
+            binaryWriter.Write(metadata.BlocksPositionsList.Count); // Записваме броя блокове
+            foreach (var position in metadata.BlocksPositionsList)
+            {
+            binaryWriter.Write(position);
+            }
         }
 
         // Четене на метаданни от контейнера
@@ -49,9 +55,17 @@ namespace MyFileSustem
                 long dateTimeTicks = reader.ReadInt64();
                 DateTime fileDateTime = new DateTime(dateTimeTicks);
                 int fileSize = reader.ReadInt32();
-                int blockPosition = reader.ReadInt32();
 
-                return new Metadata(fileName, fileLocation, fileDateTime, fileSize, offset, blockPosition);
+                // Четене на списъка с блокове
+                int blockCount=reader.ReadInt32();
+                MyLinkedList<int> blockPositions = new MyLinkedList<int>();
+                for (int i = 0; i < blockCount; i++)
+                {
+                    blockPositions.AddLast(reader.ReadInt32());
+                }
+                
+
+                return new Metadata(fileName, fileLocation, fileDateTime, fileSize, offset, blockPositions);
             }
             catch (EndOfStreamException)
             {
