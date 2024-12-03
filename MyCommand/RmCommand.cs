@@ -34,7 +34,7 @@ namespace MyFileSustem.MyCommand
             }
 
             // Определяме броя на блоковете, които заемат съдържанието на файла
-            int totalBlocks = (fileMetadata.FileSize + container.BlockSize - 1) / container.BlockSize;
+            int totalBlocks = (fileMetadata.FileSize + container.FileBlockSize - 1) / container.FileBlockSize;
             int currentBlock = fileMetadata.BlockPosition;
 
             // Освобождаваме блоковете, които са свързани с файла
@@ -64,7 +64,7 @@ namespace MyFileSustem.MyCommand
         {
             long metadataOffset = container.MetadataOffset;
 
-            for (int i = 0; i < container.BlockCount; i++)
+            for (int i = 0; i < container.MetadataBlockCount; i++)
             {
                 Metadata metadata = metadataManager.ReadMetadata(containerStream, metadataOffset + i * Metadata.MetadataSize);
 

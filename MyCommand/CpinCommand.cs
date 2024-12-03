@@ -40,7 +40,7 @@ namespace MyFileSustem.MyCommand
                 sourceFileStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
 
                 int fileSize = (int)sourceFileStream.Length;
-                int containerBlockSize = container.BlockSize;
+                int containerBlockSize = container.FileBlockSize;
                 int requiredBlocks = (int)Math.Ceiling((double)fileSize / containerBlockSize);
 
                 MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();

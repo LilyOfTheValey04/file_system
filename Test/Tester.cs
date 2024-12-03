@@ -25,7 +25,7 @@ namespace MyFileSustem.Test
             }
 
             // Check file size (bitmap size + empty blocks)
-            long expectedSize = (MyContainer.DefaultBlockCount / 8) + (MyContainer.DefaultBlockSize * MyContainer.DefaultBlockCount);
+            long expectedSize = (MyContainer.DefaultMetadataCount / 8) + (MyContainer.DefaultFileBlockSize * MyContainer.DefaultMetadataCount);
             var fileInfo = new FileInfo("filesystem.bin");
             if (fileInfo.Length == expectedSize)
             {

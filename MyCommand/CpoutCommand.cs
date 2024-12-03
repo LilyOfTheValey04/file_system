@@ -40,15 +40,15 @@ namespace MyFileSustem.MyCommand
                 FileStream outputStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write);
                 MyLinkedList<int> fileBlocks = BuildBlockLinkedList(containerStream, fileMetadata.BlockPosition);
 
-                byte[] buffer = new byte[container.BlockSize];
+                byte[] buffer = new byte[container.FileBlockSize];
                 int remainingBytes = fileMetadata.FileSize;
 
                 foreach (int blockIndex in fileBlocks)
                 {
-                    long blockOffset = container.DataOffset + blockIndex * container.BlockSize;
+                    long blockOffset = container.DataOffset + blockIndex * container.FileBlockSize;
                     containerStream.Seek(blockOffset, SeekOrigin.Begin);
 
-                    int bytesToRead = Math.Min(container.BlockSize, remainingBytes);
+                    int bytesToRead = Math.Min(container.FileBlockSize, remainingBytes);
                     containerStream.Read(buffer, 0, bytesToRead);
                     outputStream.Write(buffer, 0, bytesToRead);
 
@@ -77,7 +77,7 @@ namespace MyFileSustem.MyCommand
             //long metadataOffset = fileMetadata.MetadataOffset; problem null
             long metadataOffset = container.MetadataOffset;
             Console.WriteLine($"Searching for file: {fileName}");
-            for (int i = 0; i < container.BlockCount; i++)
+            for (int i = 0; i < container.MetadataBlockCount; i++)
             {
                 long currentOffset = metadataOffset + i * Metadata.MetadataSize;
                 Metadata metadata = metadataManager.ReadMetadata(containerStream, currentOffset);
@@ -96,7 +96,7 @@ namespace MyFileSustem.MyCommand
               long metadataOffset = container.MetadataOffset; // Начало на метаданните
               Console.WriteLine($"Searching for file: {fileName}");
 
-              for (int i = 0; i < container.BlockCount; i++)
+              for (int i = 0; i < container.MetadataBlockCount; i++)
               {
                   // Изчисляване на текущия offset за четене
                     long currentOffset = metadataOffset + i * Metadata.MetadataSize;

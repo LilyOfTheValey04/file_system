@@ -18,7 +18,6 @@ namespace MyFileSustem
                 MarkBlockAsFree(i);
             }
 
-
         }
 
         //проверява дали даден блок в контейнера е свободен

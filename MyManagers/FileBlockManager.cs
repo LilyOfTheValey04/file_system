@@ -8,6 +8,11 @@ namespace MyFileSustem
         //Този клас управлява блоковете от данни
         public MyContainer Container { get; set; }
 
+        public FileBlockManager(MyContainer container)
+        {
+            Container = container;
+        }
+
         // Запис на съдържание във файл
         public void WriteBlock(FileStream container, byte[] date, int startBlock, int blockSize)
         {
@@ -35,8 +40,8 @@ namespace MyFileSustem
             {
                 throw new InvalidOperationException("Container is not initialized in FileBlockManager.");
             }
-            long nextBlockCurrentOffset = Container.DataOffset + currentBlock * Container.BlockSize;
-            //long nextBlockCurrentOffset = Container.DataOffset+currentBlock*Container.BlockSize+Container.BlockSize - sizeof(int);
+            //long nextBlockCurrentOffset = Container.DataOffset + currentBlock * Container.FileBlockSize;
+            long nextBlockCurrentOffset = Container.DataOffset + currentBlock * Container.FileBlockSize + Container.FileBlockSize - sizeof(int);
             byte[] buffer = new byte[sizeof(int)];
             stream.Seek(nextBlockCurrentOffset, SeekOrigin.Begin);
             stream.Read(buffer, 0, buffer.Length);

@@ -3,10 +3,16 @@ using System.IO;
 
 namespace MyFileSustem
 {
+    //Този клас управлява информацията за файловете и папките 
     public class MetadataManager
     {
-        //Този клас управлява информацията за файловете и папките 
+        private MyContainer myContainer;
 
+        public MetadataManager(MyContainer myContainer)
+        {
+            this.myContainer = myContainer;
+        }
+        
         // Запис на метаданни във файловата система
         public void MetadataWriter(FileStream container, Metadata metadata)
         {
@@ -81,7 +87,7 @@ namespace MyFileSustem
             long currentOffset = metadataOffset;
 
             //Продължава, докато текущата позиция не достигне края на региона. Това предотвратява излизането извън зададените граници на метаданните.
-            while (currentOffset < 1024 * metadataOffset)
+            while (currentOffset < myContainer.MetadataBlockCount * metadataOffset)
             {
                 try
                 {

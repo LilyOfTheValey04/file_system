@@ -7,7 +7,7 @@ namespace MyFileSustem
         public int BlockSize { get; set; }
         public int BlockOffset { get; set; }
 
-        public FileBlock(int blockSize )
+        public FileBlock(int blockSize)
         {
             BlockSize = blockSize;
         }

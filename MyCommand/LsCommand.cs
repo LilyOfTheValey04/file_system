@@ -24,7 +24,7 @@ namespace MyFileSustem.MyCommand
                 FileStream containerStream = container.GetContainerStream();
 
                 long metadataOffset = container.MetadataOffset;
-                int metadataCount = container.BlockCount;
+                int metadataCount = container.MetadataBlockCount;
                 //  int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
 
                 Console.WriteLine("Listing files in the container...");

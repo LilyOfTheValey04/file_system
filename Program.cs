@@ -10,9 +10,9 @@ namespace MyFileSustem
         {
             string containerFilePath = "containerFile.bin";
             MyContainer container = new MyContainer(containerFilePath);
-            MetadataManager metadataManager = new MetadataManager();
-            FileBlockManager blockManager = new FileBlockManager();
-            int countBlocks = container.BlockCount;
+            MetadataManager metadataManager = new MetadataManager(container);
+            FileBlockManager blockManager = new FileBlockManager(container);
+            int countBlocks = container.MetadataBlockCount;
 
             // Create or load the container
             if (!File.Exists(containerFilePath))
