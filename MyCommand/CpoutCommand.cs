@@ -26,7 +26,7 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-            if (destinationPath != null && !destinationPath.EndsWith(".txt"))
+            if (destinationPath != null && !Utilities.EndWith(destinationPath,".txt"))
             {
                 destinationPath += ".txt";
             }
@@ -95,6 +95,7 @@ namespace MyFileSustem.MyCommand
             }
             return null;
         }
+       
     }
 }
       /*    private Metadata FindMetadataForFile(FileStream containerStream, string fileName)

@@ -41,13 +41,17 @@ namespace MyFileSustem
             {
                 Console.Write("> ");
                 string input = Console.ReadLine();
-                if (input == null || input.Trim().ToLower() == "exit")
+                //  if (input == null || input.Trim().ToLower() == "exit")
+                if (input == null || Utilities.CustomTrim(Utilities.CustomToLower(input)) == "exit")
+
                 {
                     Console.WriteLine("Exiting, bye");
                     break;
                 }
 
-                string[] commandArgs = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                //string[] commandArgs = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                string[] commandArgs = Utilities.CustomSplitAndRemoveEmpty(input,' ');
+
                 if (commandArgs.Length > 0)
                 {
                     invoker.Execute(commandArgs);

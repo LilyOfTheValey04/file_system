@@ -13,7 +13,7 @@ namespace MyFileSustem
         {
             this.myContainer = myContainer;
         }
-        
+
         // Запис на метаданни във файловата система
         public void MetadataWriter(FileStream container, Metadata metadata)
         {
@@ -32,7 +32,7 @@ namespace MyFileSustem
             binaryWriter.Write(metadata.BlocksPositionsList.Count); // Записваме броя блокове
             foreach (var position in metadata.BlocksPositionsList)
             {
-            binaryWriter.Write(position);
+                binaryWriter.Write(position);
             }
         }
 
@@ -45,7 +45,7 @@ namespace MyFileSustem
             {
                 container.Seek(offset, SeekOrigin.Begin);
                 string fileName = reader.ReadString();
-                if (string.IsNullOrEmpty(fileName))
+                if (Utilities.IsItNullorWhiteSpace(fileName))
                 {
 
                     return null; // Пропускаме невалидните записи
@@ -57,13 +57,13 @@ namespace MyFileSustem
                 int fileSize = reader.ReadInt32();
 
                 // Четене на списъка с блокове
-                int blockCount=reader.ReadInt32();
+                int blockCount = reader.ReadInt32();
                 MyLinkedList<int> blockPositions = new MyLinkedList<int>();
                 for (int i = 0; i < blockCount; i++)
                 {
                     blockPositions.AddLast(reader.ReadInt32());
                 }
-                
+
 
                 return new Metadata(fileName, fileLocation, fileDateTime, fileSize, offset, blockPositions);
             }
@@ -110,7 +110,7 @@ namespace MyFileSustem
                     {
                         // Четем първия стринг от метаданните, за да проверим дали има валиден запис
                         string fileName = reader.ReadString();
-                        if (string.IsNullOrEmpty(fileName))
+                        if (Utilities.IsItNullorWhiteSpace(fileName))
                         {
                             Console.WriteLine($"Debug: Empty metadata at offset {currentOffset}. Stopping count.");
                             break; // Спираме, ако имаме празен запис (няма повече валидни метаданни)

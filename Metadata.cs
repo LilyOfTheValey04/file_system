@@ -13,6 +13,8 @@ namespace MyFileSustem
         public long MetadataOffset { get; set; }
         public MyLinkedList<int> BlocksPositionsList { get; set; }
 
+      
+
         public Metadata(string fileName, string fileLocation, DateTime fileDateTime, int fileSize, long metadataOffset, MyLinkedList<int> blocksPositionsList)
         {
             FileName = fileName;
@@ -26,7 +28,7 @@ namespace MyFileSustem
         //мога ли да използвам този метод на готово
         public bool Validate()
         {
-            if (string.IsNullOrWhiteSpace(FileName))
+            if (Utilities.IsItNullorWhiteSpace(FileName))
             {
                 Console.WriteLine("Invalue name");
                 return false;
