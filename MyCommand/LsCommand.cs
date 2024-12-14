@@ -42,7 +42,7 @@ namespace MyFileSustem.MyCommand
 
                     Metadata metadata = metadataManager.ReadMetadata(containerStream, offset);
 
-                    if (metadata != null && !Utilities.IsItNullorWhiteSpace(metadata.FileName))
+                    if (metadata != null && !Utilities.IsItNullorWhiteSpace(metadata.Name))
                     {
                         anyFilesFound = true;
 
@@ -67,11 +67,11 @@ namespace MyFileSustem.MyCommand
                     
 
                     // Извеждаме информацията за файла
-                    Console.WriteLine("|" + PadCenter(metadata.FileName, 18) + "|"
+                    Console.WriteLine("|" + PadCenter(metadata.Name, 18) + "|"
                             + PadCenter("N/A", 15) + "|"
-                            + PadCenter(metadata.FileDateTime.ToString("yyyy-MM-dd HH:mm:ss"), 20) + "|"
-                            + PadCenter(metadata.FileSize.ToString(), 10) + "|"
-                            + PadCenter(metadata.MetadataOffset.ToString(), 10) + "|"
+                            + PadCenter(metadata.DateOfCreation.ToString("yyyy-MM-dd HH:mm:ss"), 20) + "|"
+                            + PadCenter(metadata.Size.ToString(), 10) + "|"
+                            + PadCenter(metadata.Offset.ToString(), 10) + "|"
                             + PadCenter(Utilities.MyJoin(", ", blockPositionsList), 20) + "|");
                         // + PadCenter(string.Join(", ", metadata.BlocksPositionsList.Take(20)), 20) + "|");
 

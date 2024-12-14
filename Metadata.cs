@@ -5,35 +5,38 @@ namespace MyFileSustem
 {
     public class Metadata
     {
-        public const int MetadataSize = 512;
-        public string FileName { get; set; }
-        public string FileLocation { get; set; }
-        public DateTime FileDateTime { get; set; }
-        public int FileSize { get; set; }
-        public long MetadataOffset { get; set; }
-        public MyLinkedList<int> BlocksPositionsList { get; set; }
+        public static int MetadataSize = 512;
+        public MetadataType Type { get; set; }// Тип: файл или директория
+        public string Name { get; set; }
+        public string Location { get; set; }
+        public DateTime DateOfCreation { get; set; }
+        public int Size { get; set; }  // Размер: за файлове, 0 за директории
+        public long Offset { get; set; }
+        public MyLinkedList<int> BlocksPositionsList { get; set; }// За файлове, празен за директории
+        public int IdParent { get; set; }// ID на родителската директория (или -1 за кореновата)
 
-      
 
-        public Metadata(string fileName, string fileLocation, DateTime fileDateTime, int fileSize, long metadataOffset, MyLinkedList<int> blocksPositionsList)
+
+        public Metadata(string Name, string Location,MetadataType Type, DateTime DateOfCreation, int Size, long MetadataOffset, MyLinkedList<int> BlocksPositionsList)
         {
-            FileName = fileName;
-            FileLocation = fileLocation;
-            FileDateTime = fileDateTime;
-            FileSize = fileSize;
-            MetadataOffset = metadataOffset;
-            BlocksPositionsList = blocksPositionsList;
+            this.Name = Name;
+            this.Type= Type;    
+            this.Location = Location;
+            this.DateOfCreation = DateOfCreation;
+            this.Size = Size;
+            this.Offset = MetadataOffset;
+            this.BlocksPositionsList = BlocksPositionsList;
         }
 
         //мога ли да използвам този метод на готово
         public bool Validate()
         {
-            if (Utilities.IsItNullorWhiteSpace(FileName))
+            if (Utilities.IsItNullorWhiteSpace(Name))
             {
                 Console.WriteLine("Invalue name");
                 return false;
             }
-            if (FileSize < 0)
+            if (Type == MetadataType.File && Size < 0)
             {
                 Console.WriteLine("Invalid file size");
                 return false;
@@ -43,35 +46,59 @@ namespace MyFileSustem
 
         public void DisplayMetadata()
         {
-            Console.WriteLine($"File name:{FileName}");
-            Console.WriteLine($"File location:{FileLocation}");
-            Console.WriteLine($"File data and time of creation:{FileDateTime}");
-            Console.WriteLine($"File size:{FileSize}");
+            Console.WriteLine($"Name: {Name}");
+            Console.WriteLine($"Type: {Type}");
+            Console.WriteLine($"Location: {Location}");
+            Console.WriteLine($"Creation Date: {DateOfCreation}");
+            Console.WriteLine($"Size: {Size}");
+            Console.WriteLine($"Parent ID: {IdParent}");
             Console.Write("Block positions: [");
 
-            foreach (var position in BlocksPositionsList)
+            if (Type == MetadataType.File)
             {
-                if (position != BlocksPositionsList.tail.Data)
+
+
+                foreach (var position in BlocksPositionsList)
                 {
-                    Console.Write($"{position}, ");
+                    if (position != BlocksPositionsList.tail.Data)
+                    {
+                        Console.Write($"{position}, ");
+                    }
+                    else
+                    {
+                        Console.Write($"{position}");
+                    }
                 }
-                else
-                {
-                    Console.Write($"{position}");
-                }
+
+                Console.Write("].");
             }
 
-            Console.Write("].");
         }
 
+        // Добавяне/премахване на блок (само за файлове)
         public void AddBlock(int blockPosition)
         {
-            BlocksPositionsList.AddLast(blockPosition);
+            if (Type == MetadataType.File)
+            {
+                BlocksPositionsList.AddLast(blockPosition);
+            }
+        }
+        
+        public void RemoveBlock(int blockPosition)
+        {
+            if (Type == MetadataType.File)
+            {
+                BlocksPositionsList.Remove(blockPosition);
+            }
         }
 
-        public void RemoveBlock(int blockPosition) 
-        { 
-            BlocksPositionsList.Remove(blockPosition); 
+        public bool isDirectory()
+        {
+            return Type == MetadataType.Directory;
+        }
+        public bool isFile()
+        {
+            return Type == MetadataType.File;
         }
     }
 }

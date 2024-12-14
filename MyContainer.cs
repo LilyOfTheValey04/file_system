@@ -1,6 +1,7 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MyFileSustem
 {
@@ -21,9 +22,21 @@ namespace MyFileSustem
         public MyBitMap _bitmap;
         private readonly MetadataManager _metadataManager;
 
-        private FileStream stream;
+        private FileStream containerStream;
         private int metadataRegionSize;
-        
+        private string currentDirectory = "/"; // Започваме от root директорията
+        public string CurrentDirectory
+        {
+            get => currentDirectory;
+            private set 
+            {
+                if(string.IsNullOrEmpty(value))
+                {
+                    throw new ArgumentNullException("Directory path can not be null");
+                }
+                currentDirectory= value;
+            }
+        }
 
         public MyContainer(string containerFileAddress, int maxFilesCount = DefaultMetadataCount)
         {
@@ -39,28 +52,41 @@ namespace MyFileSustem
         public long BitmapOffset => 0;
 
         // Определя позицията на метаданите след битмапа
-          public long MetadataOffset => BitmapOffset + (_bitmap.Size / 8);
+        public long MetadataOffset => BitmapOffset + (_bitmap.Size / 8);
 
         // Определя позицията на блоковете със съдържание след метаданите
         public long DataOffset => MetadataOffset + metadataRegionSize;
 
         public void CreateContainer()
         {
-            stream = new FileStream(ContainerFileAddress, FileMode.Create, FileAccess.Write);
+            containerStream = new FileStream(ContainerFileAddress, FileMode.Create, FileAccess.Write);
             
-                _bitmap.Serialize(stream); // Записваме битмапа
+                _bitmap.Serialize(containerStream); // Записваме битмапа
 
                 // Преместваме позицията на стрийма до началото на областта за метаданни и запълваме с нули
-                stream.Seek(MetadataOffset, SeekOrigin.Begin);
-                stream.Write(new byte[metadataRegionSize], 0, metadataRegionSize);
+                containerStream.Seek(MetadataOffset, SeekOrigin.Begin);
+                containerStream.Write(new byte[metadataRegionSize], 0, metadataRegionSize);
 
                 // Записваме празни блокове след метаданите
-                stream.Seek(DataOffset, SeekOrigin.Begin);
+                containerStream.Seek(DataOffset, SeekOrigin.Begin);
                 byte[] emptyBlock = new byte[FileBlockSize];
                 for (int i = 0; i < MetadataBlockCount; i++)
                 {
-                    stream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
+                    containerStream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
                 }
+            // Създаване на коренна директория
+            long rootMetadataOfSet = MetadataOffset;
+            Metadata rootDirectory = new Metadata(
+                                        Name: "/",
+                                        Location: "/",
+                                        Type: MetadataType.Directory,
+                                        DateOfCreation: DateTime.Now,
+                                        Size: 0,
+                                        MetadataOffset: rootMetadataOfSet,
+                                        BlocksPositionsList: new MyLinkedList<int>()
+                                         );
+            _metadataManager.MetadataWriter(containerStream,rootDirectory);
+            
         }
 
         public void OpenContainer(FileMode mode)
@@ -80,23 +106,23 @@ namespace MyFileSustem
 
         public void OpenContainerStream()
         {
-            stream= new FileStream(ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite);
-            stream.Seek(BitmapOffset, SeekOrigin.Begin);
-            _bitmap.Deserialize(stream);
+            containerStream= new FileStream(ContainerFileAddress,FileMode.Open,FileAccess.ReadWrite);
+            containerStream.Seek(BitmapOffset, SeekOrigin.Begin);
+            _bitmap.Deserialize(containerStream);
         }
 
         public void CloseContainerStream()
         {
-            stream?.Close();
+            containerStream?.Close();
         }
 
         public FileStream GetContainerStream()
         { 
-            if(stream==null)
+            if(containerStream==null)
             {
-                throw new Exception("the container stream is not open");
+                throw new Exception("the container fileWriteStream is not open");
             }
-            return stream;
+            return containerStream;
         }
         // Използва се за намиране на свободен блок при запис на нов файл
         public int FindAndMarkFreeBlock()
@@ -126,7 +152,7 @@ namespace MyFileSustem
             }
         }
 
-        public void AddFile(string sourceFilePath, string containerFileName)
+        public void AddFile(string sourceFilePath, string containerFileName,string containerDirectory)
         {
             // Прочетете съдържанието на файла от даденото местоположение
             byte[] fileData = File.ReadAllBytes(sourceFilePath);
@@ -141,6 +167,13 @@ namespace MyFileSustem
                 throw new InvalidOperationException("No enough blocks in the container to store the file");
             }
 
+            // Проверка дали директорията съществува
+            Metadata directoryMetadata = _metadataManager.FindDirectoryMetadata(containerStream,containerDirectory);
+            if (directoryMetadata==null || directoryMetadata.Type!=MetadataType.Directory)
+            {
+                throw new InvalidOperationException($"Directory {containerDirectory} doent exist.");
+            }
+
             // Намиране на свободни блокове
             MyLinkedList<int> allocatedBlocks = new MyLinkedList<int>();
             for (int i = 0; i < requiredBlocks; i++)
@@ -150,7 +183,7 @@ namespace MyFileSustem
             }
               
             // Записване на файла в контейнера
-            using (FileStream containerStream = new FileStream(containerFileName, FileMode.Open, FileAccess.Write))
+            using (FileStream fileWriteStream = new FileStream(containerFileName, FileMode.Open, FileAccess.Write))
             {
                 for (int i = 0; i < requiredBlocks; i++)
                 {
@@ -159,24 +192,30 @@ namespace MyFileSustem
 
                     //Изчисляваме дължината на данните, които трябва да бъдат записани в текущия блок
                     int bytesToWrite = Math.Min(FileBlockSize, fileSize - i * FileBlockSize);
-                    containerStream.Seek(blockOffset, SeekOrigin.Begin);
-                    containerStream.Write(fileData, i * FileBlockSize, bytesToWrite);
+                    fileWriteStream.Seek(blockOffset, SeekOrigin.Begin);
+                    fileWriteStream.Write(fileData, i * FileBlockSize, bytesToWrite);
                 }
 
                 // Записване на метаданни за файла
-                int metadataCount = _metadataManager.GetTotalMetadataCount(containerStream, MetadataOffset, metadataRegionSize);
+                int metadataCount = _metadataManager.GetTotalMetadataCount(fileWriteStream, MetadataOffset, metadataRegionSize);
                 long metadataOffSet = MetadataOffset + metadataCount * Metadata.MetadataSize;
                 Metadata fileMetadata = new Metadata(
-                    fileName: containerFileName,
-                    fileLocation: ContainerFileAddress,
-                    fileDateTime: DateTime.Now,
-                    fileSize: fileSize,
-                    metadataOffset: metadataOffSet,
-                    blocksPositionsList: allocatedBlocks
+                    Name: containerFileName,
+                    Location: ContainerFileAddress,
+                    Type:MetadataType.File,
+                    DateOfCreation: DateTime.Now,
+                    Size: fileSize,
+                    MetadataOffset: metadataOffSet,
+                    BlocksPositionsList: allocatedBlocks
                 );
 
-                _metadataManager.MetadataWriter(containerStream, fileMetadata);
+                _metadataManager.MetadataWriter(fileWriteStream, fileMetadata);
+                Console.WriteLine($"File '{containerFileName}' added to directory '{containerDirectory}'.");
             }
         }
+
+        
+
+        
     }
 }

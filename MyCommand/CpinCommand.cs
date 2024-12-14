@@ -76,11 +76,12 @@ namespace MyFileSustem.MyCommand
                 int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
                 long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
                 metadata = new Metadata(
-                    fileName: containerFileName,
-                    fileLocation: sourcePath,
-                    fileDateTime: DateTime.Now,
-                    fileSize: fileSize,
-                    metadataOffset: metadataOffset,
+                    Name: containerFileName,
+                    Location: sourcePath,
+                    Type:MetadataType.File,
+                    DateOfCreation: DateTime.Now,
+                    Size: fileSize,
+                    MetadataOffset: metadataOffset,
                     allocatedBlocks
                 );
 

@@ -45,7 +45,7 @@ namespace MyFileSustem.MyCommand
                 MyLinkedList<int> fileBlocks = fileMetadata.BlocksPositionsList;
 
                 byte[] buffer = new byte[container.FileBlockSize];
-                int remainingBytes = fileMetadata.FileSize;
+                int remainingBytes = fileMetadata.Size;
 
                 foreach (int blockIndex in fileBlocks)
                 {
@@ -78,7 +78,7 @@ namespace MyFileSustem.MyCommand
         // Помощен метод за намиране на метаданните на файла
         private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
         {
-            //long metadataOffset = fileMetadata.MetadataOffset; problem null
+            //long metadataOffset = fileMetadata.Offset; problem null
             long metadataOffset = container.MetadataOffset;
             Console.WriteLine($"Searching for file: {fileName}");
             for (int i = 0; i < container.MetadataBlockCount; i++)
@@ -87,7 +87,7 @@ namespace MyFileSustem.MyCommand
                 Metadata metadata = metadataManager.ReadMetadata(containerStream, currentOffset);
                 // Логване на всеки опит за намиране на метаданни
                 // Console.WriteLine($"Checking metadata at offset: {metadataOffset + i * Metadata.MetadataSize}");
-                if (metadata != null && metadata.FileName == fileName)
+                if (metadata != null && metadata.Name == fileName)
                 {
                     Console.WriteLine("Metadata found for file: " + fileName);
                     return metadata;
@@ -100,7 +100,7 @@ namespace MyFileSustem.MyCommand
 }
       /*    private Metadata FindMetadataForFile(FileStream containerStream, string fileName)
           {
-              long metadataOffset = container.MetadataOffset; // Начало на метаданните
+              long metadataOffset = container.Offset; // Начало на метаданните
               Console.WriteLine($"Searching for file: {fileName}");
 
               for (int i = 0; i < container.MetadataBlockCount; i++)
@@ -111,13 +111,13 @@ namespace MyFileSustem.MyCommand
                   Metadata metadata = metadataManager.ReadMetadata(containerStream, currentOffset);
 
                   // Проверка на валидността на метаданните
-                  if (metadata == null || string.IsNullOrWhiteSpace(metadata.FileName))
+                  if (metadata == null || string.IsNullOrWhiteSpace(metadata.Name))
                   {
                       continue; // Пропуснете празните записи
                   }
 
                   Console.WriteLine($"Checking metadata at offset: {currentOffset}");
-                  if (string.Equals(metadata.FileName.Trim(), fileName.Trim(), StringComparison.OrdinalIgnoreCase))
+                  if (string.Equals(metadata.Name.Trim(), fileName.Trim(), StringComparison.OrdinalIgnoreCase))
                   {
                       Console.WriteLine("Metadata found for file: " + fileName);
                       return metadata;

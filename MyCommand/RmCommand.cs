@@ -24,32 +24,34 @@ namespace MyFileSustem.MyCommand
         {
             // Отваряме контейнера за четене и писане
             FileStream containerStream = container.GetContainerStream();
-            // Намираме метаданните за файла
-            fileMetadata = FindMetadataForFile(containerStream, containerFileName);
 
-            if (fileMetadata == null)
+            try
             {
-                Console.WriteLine($"Error: File '{containerFileName}' not found in the container.");
-                return;
+                // Намираме метаданните за файла
+                fileMetadata = FindMetadataForFile(containerStream, containerFileName);
+
+                if (fileMetadata == null)
+                {
+                    Console.WriteLine($"Error: File '{containerFileName}' not found in the container.");
+                    return;
+                }
+
+                // Освобождаваме блоковете на файла
+                fileBlockManager.ClearFileBlocks(containerStream, fileMetadata);
+
+                // Изтриваме метаданните на файла
+                metadataManager.ClearMetadata(containerStream, fileMetadata.Offset);
+
+                Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
             }
-
-            // Определяме броя на блоковете, които заемат съдържанието на файла
-            int totalBlocks = (fileMetadata.FileSize + container.FileBlockSize - 1) / container.FileBlockSize;
-            int currentBlock = fileMetadata.BlocksPositionsList.GetFirst();
-
-            // Освобождаваме блоковете, които са свързани с файла
-            foreach (int blockNumber in fileMetadata.BlocksPositionsList)
+            catch (Exception ex)
             {
-                container.ReleaseBlock(blockNumber);
+                Console.WriteLine($"Error while deleting file '{containerFileName}': {ex.Message}");
             }
-
-            // Изтриваме метаданните на файла
-            long metadataOffset = fileMetadata.MetadataOffset;
-            ClearMetadata(containerStream, metadataOffset);
-
-            ClearFileBlocks(containerStream);
-
-            Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
+            finally
+            {
+                container.CloseContainerStream();
+            }
         }
 
         public void Undo()
@@ -66,7 +68,7 @@ namespace MyFileSustem.MyCommand
             {
                 Metadata metadata = metadataManager.ReadMetadata(containerStream, metadataOffset + i * Metadata.MetadataSize);
 
-                if (metadata != null && metadata.FileName == fileName)
+                if (metadata != null && metadata.Name == fileName)
                 {
                     return metadata;
                 }
@@ -75,27 +77,6 @@ namespace MyFileSustem.MyCommand
             return null;
         }
 
-        // Метод за изчистване на метаданните (зануляване) на даден файл
-        private void ClearMetadata(FileStream containerStream, long offset)
-        {
-            byte[] emptyMetadata = new byte[Metadata.MetadataSize];
-            containerStream.Seek(offset, SeekOrigin.Begin);
-            containerStream.Write(emptyMetadata, 0, emptyMetadata.Length);
-        }
-
-        private void ClearFileBlocks(FileStream containerStream)
-        {
-            foreach (int blockNumber in fileMetadata.BlocksPositionsList)
-            {
-                long blockOffset = container.DataOffset + blockNumber * container.FileBlockSize;
-                containerStream.Seek(blockOffset, SeekOrigin.Begin);
-
-                byte[] emptyBlock = new byte[container.FileBlockSize];
-                containerStream.Write(emptyBlock, 0, emptyBlock.Length);
-
-                container.ReleaseBlock(blockNumber);
-            }
-
-        }
+     
     }
 }

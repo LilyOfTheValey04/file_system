@@ -1,5 +1,6 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace MyFileSustem
@@ -19,20 +20,25 @@ namespace MyFileSustem
         {
             BinaryWriter binaryWriter = new BinaryWriter(container);
 
-            container.Seek(metadata.MetadataOffset, SeekOrigin.Begin);
+            container.Seek(metadata.Offset, SeekOrigin.Begin);
             // Логване на стойностите преди записване
-            Console.WriteLine($"Writing metadata for file: {metadata.FileName}");
-            Console.WriteLine($"File size: {metadata.FileSize}, Location: {metadata.FileLocation}");
+            Console.WriteLine($"Writing metadata for file: {metadata.Name},Type:{metadata.Type}");
+            Console.WriteLine($"File size: {metadata.Size}, Location: {metadata.Location}");
 
-            binaryWriter.Write(metadata.FileName);
-            binaryWriter.Write(metadata.FileLocation);
-            binaryWriter.Write(metadata.FileDateTime.Ticks);// convert DateTime to long(Ticks) and writes
-            binaryWriter.Write(metadata.FileSize);
+            binaryWriter.Write(metadata.Name);
+            binaryWriter.Write((int)metadata.Type);
+            binaryWriter.Write(metadata.Location);
+            binaryWriter.Write(metadata.DateOfCreation.Ticks);// convert DateTime to long(Ticks) and writes
+            binaryWriter.Write(metadata.Size);
             // Запис на списъка с блокове
-            binaryWriter.Write(metadata.BlocksPositionsList.Count); // Записваме броя блокове
-            foreach (var position in metadata.BlocksPositionsList)
+            if (metadata.Type == MetadataType.File)
             {
-                binaryWriter.Write(position);
+                binaryWriter.Write(metadata.BlocksPositionsList.Count); // Записваме броя блокове
+                foreach (var position in metadata.BlocksPositionsList)
+                {
+                    binaryWriter.Write(position);
+                }
+
             }
         }
 
@@ -45,6 +51,7 @@ namespace MyFileSustem
             {
                 container.Seek(offset, SeekOrigin.Begin);
                 string fileName = reader.ReadString();
+                MetadataType type = (MetadataType)reader.ReadInt32();
                 if (Utilities.IsItNullorWhiteSpace(fileName))
                 {
 
@@ -56,21 +63,28 @@ namespace MyFileSustem
                 DateTime fileDateTime = new DateTime(dateTimeTicks);
                 int fileSize = reader.ReadInt32();
 
-                // Четене на списъка с блокове
-                int blockCount = reader.ReadInt32();
-                MyLinkedList<int> blockPositions = new MyLinkedList<int>();
-                for (int i = 0; i < blockCount; i++)
+                if (type == MetadataType.File)
                 {
-                    blockPositions.AddLast(reader.ReadInt32());
+
+                    // Четене на списъка с блокове
+                    int blockCount = reader.ReadInt32();
+                    MyLinkedList<int> blockPositions = new MyLinkedList<int>();
+                    for (int i = 0; i < blockCount; i++)
+                    {
+                        blockPositions.AddLast(reader.ReadInt32());
+                    }
+                    return new Metadata(fileName, fileLocation, type, fileDateTime, fileSize, offset, blockPositions);
                 }
-
-
-                return new Metadata(fileName, fileLocation, fileDateTime, fileSize, offset, blockPositions);
+                else if (type == MetadataType.Directory)
+                {
+                    return new Metadata(fileName, fileLocation, type, fileDateTime, 0, offset, new MyLinkedList<int>());
+                }
+                return null;
             }
             catch (EndOfStreamException)
             {
                 // Ако достигнем края на потока
-                Console.WriteLine($"Debug: Reached end of stream while reading metadata at offset {offset}.");
+                Console.WriteLine($"Debug: Reached end of containerStream while reading metadata at offset {offset}.");
                 return null;
             }
             catch (IOException ex)
@@ -123,8 +137,6 @@ namespace MyFileSustem
                     }
                 }
 
-
-
                 catch (EndOfStreamException)
                 {
                     // Ако достигнем края на потока, излизаме от цикъла
@@ -148,6 +160,69 @@ namespace MyFileSustem
             return count; // Връщаме броя на валидните метаданни
 
         }
+
+        public Metadata FindDirectoryMetadata(FileStream container, string directoryPath)
+        {
+
+            long currentOffset = myContainer.MetadataOffset;
+            long metadataRegionEnd = currentOffset + myContainer.MetadataBlockCount * Metadata.MetadataSize;
+            while (currentOffset < metadataRegionEnd)
+            {
+                container.Seek(currentOffset,SeekOrigin.Begin);
+                Metadata metadata = ReadMetadata(container,currentOffset);
+                if (metadata==null)
+                {
+                    currentOffset += Metadata.MetadataSize;
+                    continue;
+                }
+                if (metadata.Name == directoryPath && metadata.Type == MetadataType.Directory) 
+                {
+                    return metadata;
+                }
+                currentOffset += Metadata.MetadataSize;
+            }
+            return null;
+        }
+
+        public MyLinkedList<Metadata> GetDirectoryContent (FileStream containerStream, Metadata directoryMetadata)
+        {
+            MyLinkedList<Metadata> content = new MyLinkedList<Metadata>();
+
+            long currentOffset = myContainer.MetadataOffset;
+            long metadataRegionEnd = currentOffset + myContainer.MetadataBlockCount * Metadata.MetadataSize;
+
+            while(currentOffset<metadataRegionEnd)
+            {
+                containerStream.Seek(currentOffset,SeekOrigin.Begin);
+                Metadata metadata = ReadMetadata(containerStream,currentOffset);
+
+                if (metadata==null)
+                {
+                    currentOffset += Metadata.MetadataSize;
+                    continue;
+                }
+
+                // Проверяваме дали метаданните принадлежат на текущата директория
+                if (metadata.Location==directoryMetadata.Name)
+                {
+                    content.AddLast(metadata);
+                }
+
+                currentOffset += Metadata.MetadataSize;
+            }
+            return content;
+        }
+
+        // Метод за изчистване на метаданните (зануляване) на даден файл
+        public void ClearMetadata(FileStream containerStream, long offset)
+        {
+            byte[] emptyMetadata = new byte[Metadata.MetadataSize];
+            containerStream.Seek(offset, SeekOrigin.Begin);
+            containerStream.Write(emptyMetadata, 0, emptyMetadata.Length);
+        }
+
+
+
     }
 }
 

@@ -47,6 +47,15 @@ namespace MyFileSustem.MyCommand
                     case "rm":
                         ExecuteRm(args);
                         break;
+                    case "md":
+                        ExecuteMd(args);
+                        break;
+                    case "cd":
+                        ExecuteCd(args);
+                        break;
+                    case "rd":
+                        ExecuteRd(args);
+                        break;
 
                     default:
                         Console.WriteLine($"Unknown command: {commandName}");
@@ -70,7 +79,7 @@ namespace MyFileSustem.MyCommand
             string containerFileName = args[2];
             ICommand cpinCommand = new CpinCommand(container, metadataManager, fileBlockManager, sourcePath, containerFileName, bitMap);
             cpinCommand.Execute();
-        } 
+        }
 
         private void ExecuteCpout(string[] args)  // Поправено от "ExecuteCpon" на "ExecuteCpout"
         {
@@ -102,6 +111,11 @@ namespace MyFileSustem.MyCommand
             ICommand lsCommand = new LsCommand(container, metadataManager);
             lsCommand.Execute();
         }
+
+        private void ExecuteMd(string[] args) { }
+        private void ExecuteCd(string[] args) { }
+        private void ExecuteRd(string[] args) { }
+
 
     }
 }
