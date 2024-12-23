@@ -175,13 +175,42 @@ namespace MyFileSustem
                     currentOffset += Metadata.MetadataSize;
                     continue;
                 }
-                if (metadata.Name == directoryPath && metadata.Type == MetadataType.Directory) 
+                //  if (metadata.Name == directoryPath && metadata.Type == MetadataType.Directory) 
+
+                string directoryName = directoryPath;
+                if (!directoryPath.Equals("/"))
+                {
+                    directoryName = Path.GetFileName(directoryPath);
+                }
+
+                //if (string.Equals(metadata.Name, directoryPath, StringComparison.OrdinalIgnoreCase) && metadata.Type == MetadataType.Directory)
+                if (string.Equals(metadata.Name, directoryName, StringComparison.OrdinalIgnoreCase) && metadata.Type == MetadataType.Directory)
                 {
                     return metadata;
                 }
                 currentOffset += Metadata.MetadataSize;
             }
             return null;
+        }
+
+        public void createRootDir()
+        {
+            Metadata root = FindDirectoryMetadata(myContainer.GetContainerStream(), "/");
+            if (root == null)
+            {
+                // Създаване на коренна директория
+                long rootMetadataOfSet = 128;
+                Metadata rootDirectory = new Metadata(
+                                            Name: "/",
+                                            Location: "/",
+                                            Type: MetadataType.Directory,
+                                            DateOfCreation: DateTime.Now,
+                                            Size: 0,
+                                            MetadataOffset: rootMetadataOfSet,
+                                            BlocksPositionsList: new MyLinkedList<int>()
+                                             );
+                MetadataWriter(myContainer.GetContainerStream(), rootDirectory);
+            }
         }
 
         public MyLinkedList<Metadata> GetDirectoryContent (FileStream containerStream, Metadata directoryMetadata)
@@ -219,6 +248,25 @@ namespace MyFileSustem
             byte[] emptyMetadata = new byte[Metadata.MetadataSize];
             containerStream.Seek(offset, SeekOrigin.Begin);
             containerStream.Write(emptyMetadata, 0, emptyMetadata.Length);
+        }
+
+        public long GetNextAvalibleMetadataOfset(FileStream fileStream, long metadataOffset, int metadataCount)
+        {
+            // Преглежда всяко място в областта за метаданни
+            for (int i = 0; i < metadataCount; i++)
+            {
+                long offset =metadataOffset+ i* Metadata.MetadataSize;
+
+                // Прочети метаданните на текущата позиция
+                Metadata metadata = ReadMetadata(fileStream,offset);
+                if (metadata == null ||Utilities.IsItNullorWhiteSpace(metadata.Name))
+                {
+                    return offset;
+                }
+            }
+
+            // Ако всички позиции са заети, върни грешка или следващата налична позиция
+            throw new Exception("Not avalible space for the new matadata");
         }
 
 

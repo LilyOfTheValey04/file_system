@@ -27,13 +27,13 @@ namespace MyFileSustem.MyCommand
                 int metadataCount = container.MetadataBlockCount;
 
                 // Начало на таблицата
+               
                 Console.WriteLine();
-                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
-                Console.WriteLine("|" + PadCenter("File Name", 18) + "|" + PadCenter("Path", 15) + "|" + PadCenter("Date/Time", 20) + "|" + PadCenter("Size", 10) + "|" + PadCenter("Offset", 10) + "|" + PadCenter("Blocks", 20) + "|");
-                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
-
-                bool anyFilesFound = false;
-
+                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 30) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                Console.WriteLine("|" + PadCenter("File Name", 18) + "|" + PadCenter("Path", 30) + "|" + PadCenter("Type", 15) + "|" + PadCenter("Date/Time", 20) + "|" + PadCenter("Size", 10) + "|" + PadCenter("Offset", 10) + "|" + PadCenter("Blocks", 20) + "|");
+                Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 30) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                // bool anyFilesFound = false;
+                bool anyFilesOrDirectoriesFound = false;
 
 
                 for (int i = 0; i < metadataCount; i++)
@@ -44,43 +44,53 @@ namespace MyFileSustem.MyCommand
 
                     if (metadata != null && !Utilities.IsItNullorWhiteSpace(metadata.Name))
                     {
-                        anyFilesFound = true;
+                        anyFilesOrDirectoriesFound = true;
+
+                        string type = metadata.Type == MetadataType.Directory ? "Directory" : "File";
 
                         MyLinkedList<int> blockPositions = metadata.BlocksPositionsList; // вашия свързан списък
                         int count = 0;
 
                         List<string> blockPositionsList = new List<string>();
-
-                        foreach (var block in blockPositions)
+                        if (metadata.Type == MetadataType.File)
                         {
-                            if (count < 20)
+                            foreach (var block in blockPositions)
                             {
-                                blockPositionsList.Add(block.ToString()); // Преобразувате в string и добавяте в нов списък
-                                count++;
-                            }
-                            else
-                            {
-                                break;
+                                if (count < 20)
+                                {
+                                    blockPositionsList.Add(block.ToString()); // Преобразувате в string и добавяте в нов списък
+                                    count++;
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
                         }
 
-                    
 
-                    // Извеждаме информацията за файла
-                    Console.WriteLine("|" + PadCenter(metadata.Name, 18) + "|"
-                            + PadCenter("N/A", 15) + "|"
-                            + PadCenter(metadata.DateOfCreation.ToString("yyyy-MM-dd HH:mm:ss"), 20) + "|"
-                            + PadCenter(metadata.Size.ToString(), 10) + "|"
-                            + PadCenter(metadata.Offset.ToString(), 10) + "|"
-                            + PadCenter(Utilities.MyJoin(", ", blockPositionsList), 20) + "|");
+                        // Извеждаме информацията за файла
+                      
+                        Console.WriteLine("|" + PadCenter(metadata.Name, 18) + "|"
+                        + PadCenter(metadata.Location, 30) + "|" // Ползва Location
+                        + PadCenter(type, 15) + "|"
+                        + PadCenter(metadata.DateOfCreation.ToString("yyyy-MM-dd HH:mm:ss"), 20) + "|"
+                        + PadCenter(metadata.Size.ToString(), 10) + "|"
+                        + PadCenter(metadata.Offset.ToString(), 10) + "|"
+                        + PadCenter(type == "File" ? Utilities.MyJoin(", ", blockPositionsList) : "N/A", 20) + "|");
+
+                        Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 30) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                        //  + PadCenter(metadata.Type == MetadataType.File ? Utilities.MyJoin(", ", blockPositionsList) : "N/A", 20) + "|");
+                        //+ PadCenter(Utilities.MyJoin(", ", blockPositionsList), 20) + "|");
                         // + PadCenter(string.Join(", ", metadata.BlocksPositionsList.Take(20)), 20) + "|");
 
                         // Разделител след всеки файл
-                        Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                        //Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
+                       // Console.WriteLine("+" + new string('-', 18) + "+" + new string('-', 15) + "+" + new string('-', 15) + "+" + new string('-', 20) + "+" + new string('-', 10) + "+" + new string('-', 10) + "+" + new string('-', 20) + "+");
                     }
                 }
 
-                if (!anyFilesFound)
+                if (!anyFilesOrDirectoriesFound)
                 {
                     Console.WriteLine("No files were found in the container.");
                 }

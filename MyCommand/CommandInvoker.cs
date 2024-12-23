@@ -1,4 +1,8 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using MyFileSustem.MyManagers;
+using System;
+using System.ComponentModel;
+using System.IO;
 
 
 namespace MyFileSustem.MyCommand
@@ -7,13 +11,16 @@ namespace MyFileSustem.MyCommand
     {
         private MyContainer container;
         private MetadataManager metadataManager;
+        private DirectoryManager directoryManager;
         private FileBlockManager fileBlockManager;
         private MyBitMap bitMap;
+        private Metadata metadata;
 
-        public CommandInvoker(MyContainer container, MetadataManager metadataManager, FileBlockManager fileBlockManager, MyBitMap bitMap)
+        public CommandInvoker(MyContainer container, MetadataManager metadataManager,DirectoryManager directoryManager ,FileBlockManager fileBlockManager, MyBitMap bitMap)
         {
             this.container = container;
             this.metadataManager = metadataManager;
+            this.directoryManager = directoryManager;
             this.fileBlockManager = fileBlockManager;
             this.bitMap = bitMap;
         }
@@ -72,7 +79,7 @@ namespace MyFileSustem.MyCommand
         {
             if (args.Length < 3)
             {
-                Console.WriteLine("Usage: cpin <sourcePath> <containerFileName>");
+                Console.WriteLine("Usage: cpin <sourcePath> <directoryName>");
                 return;
             }
             string sourcePath = args[1];
@@ -85,7 +92,7 @@ namespace MyFileSustem.MyCommand
         {
             if (args.Length < 3)
             {
-                Console.WriteLine("Usage: cpout <containerFileName> <destinationPath>");
+                Console.WriteLine("Usage: cpout <directoryName> <destinationPath>");
                 return;
             }
             string containerFileName = args[1];
@@ -98,7 +105,7 @@ namespace MyFileSustem.MyCommand
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: rm <containerFileName>");
+                Console.WriteLine("Usage: rm <directoryName>");
                 return;
             }
             string containerFileName = args[1];
@@ -112,9 +119,77 @@ namespace MyFileSustem.MyCommand
             lsCommand.Execute();
         }
 
-        private void ExecuteMd(string[] args) { }
-        private void ExecuteCd(string[] args) { }
-        private void ExecuteRd(string[] args) { }
+        private void ExecuteMd(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: md <directoryName>");
+                return;
+            }
+
+            string directoryName = args[1];
+
+            if (Utilities.IsItNullorWhiteSpace(directoryName))
+            {
+                Console.WriteLine("Invalid name");
+                return;
+            }
+
+            /*   // Определяне на пътя за новата директория (по подразбиране в root директорията)
+               string location = "/";
+               FileStream containerStream = container.GetContainerStream();
+               long newMetadataOffset = metadataManager.GetNextAvalibleMetadataOfset(containerStream, container.MetadataOffset, container.MetadataBlockCount);
+
+               // Създаване на нова директория
+               Metadata newDirectory = new Metadata(
+                   Name: directoryName,
+                   Location: location,
+                   Type: MetadataType.Directory,
+                   DateOfCreation: DateTime.Now,
+                   Size: 0,
+                   MetadataOffset: newMetadataOffset,
+                   BlocksPositionsList: new MyLinkedList<int>());
+               metadataManager.MetadataWriter(containerStream, newDirectory);*/
+            // Създаване на екземпляр на MdCommand
+            MdCommand mdCommand = new MdCommand(container, metadataManager, directoryManager,directoryName);
+
+            // Извикване на Execute метода на MdCommand
+            mdCommand.Execute();
+            //Console.WriteLine($"Directory '{directoryName}' created at location '{}'.");
+
+        }
+        private void ExecuteCd(string[] args)
+        {
+            if (args.Length<2)
+            {
+                Console.WriteLine("Usage:cd <directoryName>");
+                return;
+            }
+            try
+            {
+            string directoryName = args[1];
+            ICommand cdCommand = new CdCommand(directoryManager,directoryName);
+            cdCommand.Execute();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing cd command: {ex.Message}");
+            }
+
+        }
+        private void ExecuteRd(string[] args)
+        {
+           // FileStream containerStream = container.GetContainerStream();
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Useage: rd <directoryName>");
+                return;
+            }
+            string directoryName = args[1];
+            ICommand rdCommand = new RdCommand(container,directoryManager,directoryName);
+            rdCommand.Execute();
+        }
 
 
     }

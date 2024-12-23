@@ -1,6 +1,7 @@
 ﻿using MyFileSustem.MyManagers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,10 +15,11 @@ namespace MyFileSustem.MyCommand
         private readonly DirectoryManager directoryManager;
         private readonly string directoryName;
 
-        public MdCommand(MyContainer container, MetadataManager metadataManager, string directoryName)
+        public MdCommand(MyContainer container, MetadataManager metadataManager, DirectoryManager directoryManager, string directoryName)
         {
             this.container = container;
             this.metadataManager = metadataManager;
+            this.directoryManager = directoryManager;
             this.directoryName = directoryName;
         }
 
@@ -25,6 +27,12 @@ namespace MyFileSustem.MyCommand
         {
             try
             {
+               string newDirectoryPath = Path.Combine(container.CurrentDirectory, directoryName).Replace("\\","/");
+                if (directoryManager.DirectoryExits(newDirectoryPath))
+                {
+                    Console.WriteLine($"A directory with {directoryName} name already exists");
+                    return;
+                }
                 directoryManager.AddDirectory(container.CurrentDirectory,directoryName);
 
             }

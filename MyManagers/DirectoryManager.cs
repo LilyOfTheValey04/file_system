@@ -1,10 +1,6 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyFileSustem.MyManagers
 {
@@ -71,7 +67,7 @@ namespace MyFileSustem.MyManagers
                     {
                         // Метод за изтриване на файл
                         _fileblockManager.ClearFileBlocks(containerStream, item);
-                        _metadataManager.ClearMetadata(containerStream,item.Offset);
+                        _metadataManager.ClearMetadata(containerStream, item.Offset);
 
                     }
                     else if (item.Type == MetadataType.Directory)
@@ -93,8 +89,8 @@ namespace MyFileSustem.MyManagers
             }
             finally
             {
-                if (containerStream == null) 
-                { 
+                if (containerStream == null)
+                {
                     _container.CloseContainerStream();
                 }
             }
@@ -104,7 +100,65 @@ namespace MyFileSustem.MyManagers
         public bool DirectoryExits(string directoryPath)
         {
             Metadata directoryMetadata = _metadataManager.FindDirectoryMetadata(_container.GetContainerStream(), directoryPath);
-            return directoryMetadata != null || directoryMetadata.Type == MetadataType.Directory;
+            return directoryMetadata != null && directoryMetadata.Type == MetadataType.Directory;
+        }
+        public bool IsItRootDirectory(string currentDirectory, Metadata metadata)
+        {
+            return currentDirectory == "/" || metadata == null || Utilities.IsItNullorWhiteSpace(metadata.Location);
+        }
+        public void ChangeDirectory(string directoryName)
+        {
+            //!!!!
+            FileStream containerStream = _container.GetContainerStream();
+            try
+            {
+                if (directoryName == "..")
+                {
+                    // Връщане към родителска директория
+                    Metadata currentMetadata = _metadataManager.FindDirectoryMetadata(containerStream, _container.CurrentDirectory);
+
+                    if (IsItRootDirectory(_container.CurrentDirectory,currentMetadata))
+                    {
+                        Console.WriteLine("Already at the root directory");
+                        return;
+                    }
+
+                    _container.CurrentDirectory = currentMetadata.Location;
+                    Console.WriteLine($"Change current directory to {_container.CurrentDirectory}");
+                }
+                else if (directoryName == "\\")
+                {
+                    // Връщане към коренната директория
+                    if (_container.CurrentDirectory=="/")
+                    {
+                        Console.WriteLine("Already at the root directory");
+                        return;
+                    }
+                    _container.CurrentDirectory = "/";
+                    Console.WriteLine("Changed directory to root.");
+                }
+                else
+                {
+                    // Смяна към поддиректория
+                    //  string newPath = $"{_container.CurrentDirectory}{directoryName}".Replace("//","/") ;
+                    string newPath = Path.Combine(_container.CurrentDirectory, directoryName).Replace("\\", "/");
+
+                    Metadata targetMetadata = _metadataManager.FindDirectoryMetadata(containerStream, newPath);
+
+                    if (targetMetadata == null || targetMetadata.Type != MetadataType.Directory)
+                    {
+                        Console.WriteLine($"Directory {directoryName} no found");
+                        return;
+                    }
+                    _container.CurrentDirectory = newPath;
+                    Console.WriteLine($"Directory changed to {_container.CurrentDirectory}");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error changing the directory:{ex.Message}");
+            }
         }
     }
 }

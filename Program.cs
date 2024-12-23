@@ -1,4 +1,5 @@
 ﻿using MyFileSustem.MyCommand;
+using MyFileSustem.MyManagers;
 using System;
 using System.IO;
 
@@ -11,7 +12,8 @@ namespace MyFileSustem
             string containerFilePath = "containerFile.bin";
             MyContainer container = new MyContainer(containerFilePath);
             MetadataManager metadataManager = new MetadataManager(container);
-            FileBlockManager blockManager = new FileBlockManager(container);
+            FileBlockManager fileBlockManager = new FileBlockManager(container);
+            DirectoryManager directoryManager = new DirectoryManager(metadataManager,container,fileBlockManager);
             int countBlocks = container.MetadataBlockCount;
 
             // Create or load the container
@@ -30,16 +32,17 @@ namespace MyFileSustem
                 //   bitMap.Deserialize(container.GetContainerStream());
             }
             container.OpenContainerStream();
+            metadataManager.createRootDir();
 
             // Initialize command handler
-            CommandInvoker invoker = new CommandInvoker(container, metadataManager, blockManager, container._bitmap);
+            CommandInvoker invoker = new CommandInvoker(container, metadataManager, directoryManager,fileBlockManager, container._bitmap);
             Console.WriteLine("Welcome to my file system");
             Console.WriteLine("Enter your commands (type 'exit' to quit)");
 
             // Command loop
             while (true)
             {
-                Console.Write("> ");
+                Console.Write(container.CurrentDirectory + "> ");
                 string input = Console.ReadLine();
                 //  if (input == null || input.Trim().ToLower() == "exit")
                 if (input == null || Utilities.CustomTrim(Utilities.CustomToLower(input)) == "exit")

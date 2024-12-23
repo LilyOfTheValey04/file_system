@@ -28,7 +28,7 @@ namespace MyFileSustem
         public string CurrentDirectory
         {
             get => currentDirectory;
-            private set 
+            set 
             {
                 if(string.IsNullOrEmpty(value))
                 {
@@ -74,24 +74,24 @@ namespace MyFileSustem
                 {
                     containerStream.Write(emptyBlock, 0, emptyBlock.Length); // Записваме празния блок
                 }
-            // Създаване на коренна директория
-            long rootMetadataOfSet = MetadataOffset;
-            Metadata rootDirectory = new Metadata(
-                                        Name: "/",
-                                        Location: "/",
-                                        Type: MetadataType.Directory,
-                                        DateOfCreation: DateTime.Now,
-                                        Size: 0,
-                                        MetadataOffset: rootMetadataOfSet,
-                                        BlocksPositionsList: new MyLinkedList<int>()
-                                         );
-            _metadataManager.MetadataWriter(containerStream,rootDirectory);
-            
+            //// Създаване на коренна директория
+            //long rootMetadataOfSet = MetadataOffset;
+            //Metadata rootDirectory = new Metadata(
+            //                            Name: "/",
+            //                            Location: "/",
+            //                            Type: MetadataType.Directory,
+            //                            DateOfCreation: DateTime.Now,
+            //                            Size: 0,
+            //                            MetadataOffset: rootMetadataOfSet,
+            //                            BlocksPositionsList: new MyLinkedList<int>()
+            //                             );
+            //_metadataManager.MetadataWriter(containerStream, rootDirectory);
+
         }
 
         public void OpenContainer(FileMode mode)
         {
-            using (FileStream stream = new FileStream(ContainerFileAddress, FileMode.Open, FileAccess.ReadWrite))
+            FileStream stream = new FileStream(ContainerFileAddress, FileMode.Open, FileAccess.ReadWrite);
             {
                 stream.Seek(BitmapOffset, SeekOrigin.Begin);
                 _bitmap.Deserialize(stream);//зареждане на битмата,четем съдържанието му

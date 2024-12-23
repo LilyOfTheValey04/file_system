@@ -77,7 +77,7 @@ namespace MyFileSustem.MyCommand
                 long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
                 metadata = new Metadata(
                     Name: containerFileName,
-                    Location: sourcePath,
+                    Location: container.CurrentDirectory,
                     Type:MetadataType.File,
                     DateOfCreation: DateTime.Now,
                     Size: fileSize,

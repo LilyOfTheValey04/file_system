@@ -7,10 +7,10 @@ namespace MyFileSustem.MyCommand
     public class RmCommand : ICommand
     {
         private MyContainer container;
+        private Metadata fileMetadata;
         private MetadataManager metadataManager;
         private FileBlockManager fileBlockManager;
         private string containerFileName;
-        private Metadata fileMetadata;
 
         public RmCommand(MyContainer container, MetadataManager metadataManager, FileBlockManager fileBlockManager, string containerFileName)
         {
