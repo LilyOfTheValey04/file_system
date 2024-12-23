@@ -2,15 +2,10 @@
 using System;
 using System.IO;
 
-
-
 namespace MyFileSustem.MyCommand
 {
     public class CpinCommand : ICommand
     {
-        //Команда cpin - Копиране на файл в контейнера
-        //Копира файл с име aaa.txt от път “C:\” в контейнера.
-        //Името на файла в контейнера е bbb.txt. 
         private MyContainer container;
         private MetadataManager metadataManager;
         private Metadata metadata;
@@ -31,8 +26,7 @@ namespace MyFileSustem.MyCommand
 
         public void Execute()
         {
-
-            FileStream containerStream = container.GetContainerStream(); // Получаване на потока без using
+            FileStream containerStream = container.GetContainerStream();
             FileStream sourceFileStream = null;
 
             try
@@ -72,23 +66,42 @@ namespace MyFileSustem.MyCommand
                     containerStream.Write(buffer, 0, bytesRead);
                 }
 
-                // Записване на метаданни
-                int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
-                long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
+                // Зареждане на текущата директория
+                string currentDirectory = container.CurrentDirectory;
+                Metadata directoryMetadata = metadataManager.FindDirectoryMetadata(containerStream, currentDirectory);
+                if (directoryMetadata == null || directoryMetadata.Type != MetadataType.Directory)
+                {
+                    throw new InvalidOperationException($"Current directory '{currentDirectory}' does not exist or is not a directory.");
+                }
+
+                // Създаване на метаданни за файла
+                int nextMetadataBlock = metadataManager.GetNextMetadataBlock(containerStream);
+                if (nextMetadataBlock == -1)
+                {
+                    throw new Exception("Not enough space for metadata in the container");
+                }
+
+                long metadataOffset = container.MetadataOffset + nextMetadataBlock * Metadata.MetadataSize;
                 metadata = new Metadata(
                     Name: containerFileName,
-                    Location: container.CurrentDirectory,
-                    Type:MetadataType.File,
+                    Location: currentDirectory,
+                    Type: MetadataType.File,
                     DateOfCreation: DateTime.Now,
                     Size: fileSize,
                     MetadataOffset: metadataOffset,
                     allocatedBlocks
                 );
 
-                metadataManager.MetadataWriter(containerStream, metadata);
+                metadataManager.AddMetadataBlock(containerStream, nextMetadataBlock, metadata);
+
+                // Обновяване на метаданните на текущата директория
+                directoryMetadata.BlocksPositionsList.AddLast(nextMetadataBlock);
+                metadataManager.UpdateMetadataBlock(containerStream, directoryMetadata);
+
+                // Сериализация на битмапа
                 bitmap.Serialize(containerStream);
 
-                Console.WriteLine($"File '{containerFileName}' added successfully.");
+                Console.WriteLine($"File '{containerFileName}' added successfully to directory '{currentDirectory}'.");
             }
             catch (Exception ex)
             {
@@ -97,7 +110,6 @@ namespace MyFileSustem.MyCommand
             }
             finally
             {
-                // Затваряме изходния файл, но не и контейнера
                 sourceFileStream?.Close();
             }
         }
@@ -114,5 +126,3 @@ namespace MyFileSustem.MyCommand
         }
     }
 }
-
-

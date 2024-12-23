@@ -269,6 +269,55 @@ namespace MyFileSustem
             throw new Exception("Not avalible space for the new matadata");
         }
 
+        public void AddMetadataBlock(FileStream containerStream, int blockPosition, Metadata metadata)
+        {
+            if (metadata != null)
+            {
+                // Добавяне на позицията на блока в списъка с блокове в метаданните
+                metadata.BlocksPositionsList.AddLast(blockPosition);
+
+                // Записваме метаданните за новия файл в контейнера
+                containerStream.Seek(metadata.MetadataOffset, SeekOrigin.Begin);
+                byte[] metadataBytes = metadata.Serialize(); // Сериализация на метаданните
+                containerStream.Write(metadataBytes, 0, metadataBytes.Length);
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(metadata), "Metadata cannot be null");
+            }
+        }
+
+
+        public int GetNextMetadataBlock(FileStream container)
+        {
+            for (int blockIndex = 0; blockIndex < myContainer.MetadataBlockCount; blockIndex++)
+            {
+                long offset = myContainer.MetadataOffset + blockIndex * Metadata.MetadataSize;
+                Metadata metadata = ReadMetadata(container, offset);
+                if (metadata == null || Utilities.IsItNullorWhiteSpace(metadata.Name))
+                {
+                    return blockIndex; // Намира свободен блок
+                }
+            }
+            throw new Exception("No available blocks for metadata.");
+        }
+
+        public void UpdateMetadataBlock(FileStream containerStream, Metadata metadata)
+        {
+            if (metadata == null)
+                throw new ArgumentNullException(nameof(metadata));
+
+            // Изчисляване на офсета на метаданните
+            long offset = metadata.Offset;
+
+            // Проверка за валидност на офсета
+            if (offset < 0 || offset >= containerStream.Length)
+                throw new ArgumentOutOfRangeException(nameof(metadata.Offset), "Invalid metadata offset.");
+
+            // Записване на метаданните
+            containerStream.Seek(offset, SeekOrigin.Begin);
+            MetadataWriter(containerStream, metadata);
+        }
 
 
     }
