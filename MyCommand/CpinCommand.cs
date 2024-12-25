@@ -72,12 +72,13 @@ namespace MyFileSustem.MyCommand
                     containerStream.Write(buffer, 0, bytesRead);
                 }
 
+                string currentDirectory = container.CurrentDirectory;
                 // Записване на метаданни
                 int metadataCount = metadataManager.GetTotalMetadataCount(containerStream, container.MetadataOffset, container.MetadataRegionSize);
                 long metadataOffset = container.MetadataOffset + metadataCount * Metadata.MetadataSize;
                 metadata = new Metadata(
                     Name: containerFileName,
-                    Location: container.CurrentDirectory,
+                    Location: currentDirectory,
                     Type:MetadataType.File,
                     DateOfCreation: DateTime.Now,
                     Size: fileSize,
@@ -86,6 +87,12 @@ namespace MyFileSustem.MyCommand
                 );
 
                 metadataManager.MetadataWriter(containerStream, metadata);
+
+                // Актуализиране на BlockPositionList на текущата директория
+                Metadata currentDirectoryMetadata = metadataManager.GetMetadataByLocation(containerStream, currentDirectory);
+                currentDirectoryMetadata.BlocksPositionsList.AddLast((int)(metadataOffset / Metadata.MetadataSize));
+                metadataManager.UpdateMetadata(containerStream, currentDirectoryMetadata);
+
                 bitmap.Serialize(containerStream);
 
                 Console.WriteLine($"File '{containerFileName}' added successfully.");

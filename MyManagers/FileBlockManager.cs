@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MyFileSustem.CusLinkedList;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 
@@ -113,6 +115,31 @@ namespace MyFileSustem
                 throw new ArgumentOutOfRangeException($"Block index {blockIndex} is out of range");
             }
         }
+        public void AddFileToDirectory(Metadata directoryMetadata, Metadata fileMetadata)
+        {
+            if (directoryMetadata.Type != MetadataType.Directory)
+                throw new InvalidOperationException("Metadata is not a directory.");
+
+            directoryMetadata.BlocksPositionsList.AddLast((int)fileMetadata.Offset / Container.FileBlockSize);
+        }
+        public MyLinkedList<Metadata> GetFilesInDirectory(FileStream container, Metadata directoryMetadata,MetadataManager metadataManager)
+        {
+           
+           MyLinkedList<Metadata> files = new MyLinkedList<Metadata>();
+
+            foreach (var blockPosition in directoryMetadata.BlocksPositionsList)
+            {
+                long offset = blockPosition * Container.FileBlockSize;
+                Metadata fileMetadata = metadataManager.ReadMetadata(container, offset);
+                if (fileMetadata != null && fileMetadata.Type == MetadataType.File)
+                {
+                    files.AddLast(fileMetadata);
+                }
+            }
+
+            return files;
+        }
+
 
         public void ClearFileBlocks(FileStream containerStream, Metadata fileMetadata)
         {

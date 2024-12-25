@@ -31,15 +31,12 @@ namespace MyFileSustem
             binaryWriter.Write(metadata.DateOfCreation.Ticks);// convert DateTime to long(Ticks) and writes
             binaryWriter.Write(metadata.Size);
             // Запис на списъка с блокове
-            if (metadata.Type == MetadataType.File)
-            {
+           
                 binaryWriter.Write(metadata.BlocksPositionsList.Count); // Записваме броя блокове
                 foreach (var position in metadata.BlocksPositionsList)
                 {
                     binaryWriter.Write(position);
                 }
-
-            }
         }
 
         // Четене на метаданни от контейнера
@@ -77,8 +74,15 @@ namespace MyFileSustem
                 }
                 else if (type == MetadataType.Directory)
                 {
-                    return new Metadata(fileName, fileLocation, type, fileDateTime, 0, offset, new MyLinkedList<int>());
+                    int blockCount = reader.ReadInt32(); // Четем броя на блоковете
+                    MyLinkedList<int> blockPositions = new MyLinkedList<int>();
+                    for (int i = 0; i < blockCount; i++)
+                    {
+                        blockPositions.AddLast(reader.ReadInt32()); // Добавяме номерата на блоковете
+                    }
+                    return new Metadata(fileName, fileLocation, type, fileDateTime, 0, offset, blockPositions);
                 }
+               
                 return null;
             }
             catch (EndOfStreamException)
@@ -213,34 +217,95 @@ namespace MyFileSustem
             }
         }
 
-        public MyLinkedList<Metadata> GetDirectoryContent (FileStream containerStream, Metadata directoryMetadata)
+        /* public MyLinkedList<Metadata> GetDirectoryContent (FileStream containerStream, Metadata directoryMetadata)
+         {
+             MyLinkedList<Metadata> content = new MyLinkedList<Metadata>();
+
+             long currentOffset = myContainer.MetadataOffset;
+             long metadataRegionEnd = currentOffset + myContainer.MetadataBlockCount * Metadata.MetadataSize;
+
+             while(currentOffset<metadataRegionEnd)
+             {
+                 containerStream.Seek(currentOffset,SeekOrigin.Begin);
+                 Metadata metadata = ReadMetadata(containerStream,currentOffset);
+
+                 if (metadata==null)
+                 {
+                     currentOffset += Metadata.MetadataSize;
+                     continue;
+                 }
+
+                 // Проверяваме дали метаданните принадлежат на текущата директория
+                 if (metadata.Location==directoryMetadata.Name)
+                 {
+                     content.AddLast(metadata);
+                 }
+
+                 currentOffset += Metadata.MetadataSize;
+             }
+             return content;
+         }*/
+        public List<Metadata> GetDirectoryContent(FileStream container, Metadata directoryMetadata)
         {
-            MyLinkedList<Metadata> content = new MyLinkedList<Metadata>();
+            if (directoryMetadata.Type != MetadataType.Directory)
+                throw new ArgumentException("Provided metadata is not a directory.");
 
-            long currentOffset = myContainer.MetadataOffset;
-            long metadataRegionEnd = currentOffset + myContainer.MetadataBlockCount * Metadata.MetadataSize;
+            List<Metadata> content = new List<Metadata>();
 
-            while(currentOffset<metadataRegionEnd)
+            foreach (int blockPosition in directoryMetadata.BlocksPositionsList)
             {
-                containerStream.Seek(currentOffset,SeekOrigin.Begin);
-                Metadata metadata = ReadMetadata(containerStream,currentOffset);
-
-                if (metadata==null)
+                Metadata fileMetadata = ReadMetadata(container, blockPosition);
+                if (fileMetadata != null)
                 {
-                    currentOffset += Metadata.MetadataSize;
-                    continue;
+                    content.Add(fileMetadata);
                 }
-
-                // Проверяваме дали метаданните принадлежат на текущата директория
-                if (metadata.Location==directoryMetadata.Name)
+                else
                 {
-                    content.AddLast(metadata);
+                    Console.WriteLine($"Warning: Unable to read metadata at block position {blockPosition}");
                 }
-
-                currentOffset += Metadata.MetadataSize;
             }
+
             return content;
         }
+        public void UpdateMetadata(FileStream containerStream, Metadata metadata)
+        {
+            if (metadata.BlocksPositionsList.Count > 1)
+            {
+                throw new InvalidOperationException("Metadata exceeds the allowed size and spans multiple blocks.");
+            }
+
+            // Проверка на офсета
+            if (metadata.Offset < myContainer.MetadataOffset || metadata.Offset >= myContainer.MetadataOffset + myContainer.MetadataRegionSize)
+            {
+                throw new Exception("Invalid metadata offset.");
+            }
+
+            // Използване на MetadataWriter за актуализация
+            MetadataWriter(containerStream, metadata);
+        }
+
+        public Metadata GetMetadataByLocation(FileStream containerStream, string location)
+{
+    long currentOffset = myContainer.MetadataOffset;
+
+    for (int i = 0; i <  myContainer.MetadataRegionSize / Metadata.MetadataSize; i++)
+    {
+        // Използване на ReadMetadata за четене на данни
+        Metadata metadata = ReadMetadata(containerStream, currentOffset);
+
+        if (metadata != null && metadata.Location == location && metadata.Type == MetadataType.Directory)
+        {
+            return metadata;
+        }
+
+        currentOffset += Metadata.MetadataSize;
+    }
+
+    throw new Exception($"No metadata found for location: {location}");
+}
+
+
+
 
         // Метод за изчистване на метаданните (зануляване) на даден файл
         public void ClearMetadata(FileStream containerStream, long offset)
@@ -267,6 +332,14 @@ namespace MyFileSustem
 
             // Ако всички позиции са заети, върни грешка или следващата налична позиция
             throw new Exception("Not avalible space for the new matadata");
+        }
+
+        public void AddFileToDirectory(Metadata directoryMetadata, Metadata fileMetadata)
+        {
+            if (directoryMetadata == null || directoryMetadata.Type != MetadataType.Directory)
+                throw new InvalidOperationException("Invalid directory metadata.");
+
+            directoryMetadata.BlocksPositionsList.AddLast((int)(fileMetadata.Offset / Metadata.MetadataSize));
         }
 
 
