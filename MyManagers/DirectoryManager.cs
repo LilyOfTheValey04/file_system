@@ -87,13 +87,13 @@ namespace MyFileSustem.MyManagers
 
                 Console.WriteLine($"Error deleting derectory '{directoryPath}' : {ex.Message}");
             }
-            finally
+           /* finally
             {
                 if (containerStream == null)
                 {
                     _container.CloseContainerStream();
                 }
-            }
+            }*/
 
         }
 

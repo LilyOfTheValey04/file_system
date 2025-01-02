@@ -48,10 +48,7 @@ namespace MyFileSustem.MyCommand
             {
                 Console.WriteLine($"Error while deleting file '{containerFileName}': {ex.Message}");
             }
-            finally
-            {
-                container.CloseContainerStream();
-            }
+           
         }
 
         public void Undo()

@@ -99,11 +99,11 @@ namespace MyFileSustem
                 Console.WriteLine($"Unexpected error reading metadata at offset {offset}: {ex.Message}");
                 return null;
             }
-            finally
+            /*finally
             {
                 // Ръчно освобождаваме BinaryReader
                 reader.Dispose();
-            }
+            }*/
 
         }
 

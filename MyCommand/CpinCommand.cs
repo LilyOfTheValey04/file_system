@@ -95,11 +95,11 @@ namespace MyFileSustem.MyCommand
                 Console.WriteLine($"Error during cpin execution: {ex.Message}");
                 throw;
             }
-            finally
+          /*  finally
             {
                 // Затваряме изходния файл, но не и контейнера
                 sourceFileStream?.Close();
-            }
+            }*/
         }
 
         public void Undo()

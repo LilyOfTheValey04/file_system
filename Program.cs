@@ -22,6 +22,7 @@ namespace MyFileSustem
                 Console.WriteLine("Container file not found. Creating a new container...");
                 container.CreateContainer();
                 Console.WriteLine("Container created successfully.");
+                container.CloseContainerStream();
             }
             else
             {
