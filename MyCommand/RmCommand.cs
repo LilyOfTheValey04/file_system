@@ -32,7 +32,7 @@ namespace MyFileSustem.MyCommand
 
                 if (fileMetadata == null)
                 {
-                    Console.WriteLine($"Error: File '{containerFileName}' not found in the container.");
+                    Console.WriteLine($"Error: File '{containerFileName}' not found in the current directory.");
                     return;
                 }
 
@@ -65,7 +65,7 @@ namespace MyFileSustem.MyCommand
             {
                 Metadata metadata = metadataManager.ReadMetadata(containerStream, metadataOffset + i * Metadata.MetadataSize);
 
-                if (metadata != null && metadata.Name == fileName)
+                if (metadata != null && metadata.Name == fileName && metadata.Location==container.CurrentDirectory)
                 {
                     return metadata;
                 }
