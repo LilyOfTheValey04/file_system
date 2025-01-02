@@ -42,7 +42,7 @@ namespace MyFileSustem.MyCommand
 
                     Metadata metadata = metadataManager.ReadMetadata(containerStream, offset);
 
-                    if (metadata != null && !Utilities.IsItNullorWhiteSpace(metadata.Name))
+                    if (metadata != null && !Utilities.IsItNullorWhiteSpace(metadata.Name)&& metadata.Location==container.CurrentDirectory)
                     {
                         anyFilesOrDirectoriesFound = true;
 

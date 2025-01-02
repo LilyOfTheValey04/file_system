@@ -106,59 +106,134 @@ namespace MyFileSustem.MyManagers
         {
             return currentDirectory == "/" || metadata == null || Utilities.IsItNullorWhiteSpace(metadata.Location);
         }
+
         public void ChangeDirectory(string directoryName)
         {
-            //!!!!
             FileStream containerStream = _container.GetContainerStream();
             try
             {
                 if (directoryName == "..")
                 {
                     // Връщане към родителска директория
-                    Metadata currentMetadata = _metadataManager.FindDirectoryMetadata(containerStream, _container.CurrentDirectory);
-
-                    if (IsItRootDirectory(_container.CurrentDirectory,currentMetadata))
+                    if (_container.CurrentDirectory == "/")
                     {
                         Console.WriteLine("Already at the root directory");
                         return;
                     }
 
-                    _container.CurrentDirectory = currentMetadata.Location;
-                    Console.WriteLine($"Change current directory to {_container.CurrentDirectory}");
+                    string parentPath = Path.GetDirectoryName(_container.CurrentDirectory).Replace("\\", "/");
+                    if (string.IsNullOrEmpty(parentPath))
+                        parentPath = "/";
+
+                    _container.CurrentDirectory = parentPath;
+                    Console.WriteLine($"Changed current directory to {_container.CurrentDirectory}");
                 }
                 else if (directoryName == "\\")
                 {
                     // Връщане към коренната директория
-                    if (_container.CurrentDirectory=="/")
+                    if (_container.CurrentDirectory == "/")
                     {
                         Console.WriteLine("Already at the root directory");
                         return;
                     }
+
                     _container.CurrentDirectory = "/";
                     Console.WriteLine("Changed directory to root.");
                 }
                 else
                 {
-                    // Смяна към поддиректория
-                    //  string newPath = $"{_container.CurrentDirectory}{directoryName}".Replace("//","/") ;
-                    string newPath = Path.Combine(_container.CurrentDirectory, directoryName).Replace("\\", "/");
+                    string currentPath = _container.CurrentDirectory;
 
-                    Metadata targetMetadata = _metadataManager.FindDirectoryMetadata(containerStream, newPath);
-
-                    if (targetMetadata == null || targetMetadata.Type != MetadataType.Directory)
+                    // Проверяваме дали текущата директория завършва с въведеното име
+                    if (currentPath.Contains(directoryName))
                     {
-                        Console.WriteLine($"Directory {directoryName} no found");
-                        return;
-                    }
-                    _container.CurrentDirectory = newPath;
-                    Console.WriteLine($"Directory changed to {_container.CurrentDirectory}");
+                        // Ако да, преминаваме към родителската директория
+                        string parentPath = Path.GetDirectoryName(currentPath).Replace("\\", "/");
+                        if (string.IsNullOrEmpty(parentPath))
+                            parentPath = "/";
 
+                        _container.CurrentDirectory = parentPath;
+                        Console.WriteLine($"Changed current directory to {_container.CurrentDirectory}");
+                    }
+                    else
+                    {
+                        // Обработваме като относителен път, ако не е част от текущия път
+                        string newPath = Path.Combine(currentPath, directoryName).Replace("\\", "/");
+
+                        Metadata targetMetadata = _metadataManager.FindDirectoryMetadata(containerStream, newPath);
+                        if (targetMetadata == null || targetMetadata.Type != MetadataType.Directory)
+                        {
+                            Console.WriteLine($"Directory {directoryName} not found");
+                            return;
+                        }
+
+                        _container.CurrentDirectory = newPath;
+                        Console.WriteLine($"Directory changed to {_container.CurrentDirectory}");
+                    }
                 }
+            
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error changing the directory:{ex.Message}");
+                throw new Exception($"Error changing the directory: {ex.Message}");
             }
         }
+
+
+
+        /*public void ChangeDirectory(string directoryName)
+         {
+             //!!!!
+             FileStream containerStream = _container.GetContainerStream();
+             try
+             {
+                 if (directoryName == "..")
+                 {
+                     // Връщане към родителска директория
+                     Metadata currentMetadata = _metadataManager.FindDirectoryMetadata(containerStream, _container.CurrentDirectory);
+
+                     if (IsItRootDirectory(_container.CurrentDirectory,currentMetadata))
+                     {
+                         Console.WriteLine("Already at the root directory");
+                         return;
+                     }
+
+                     _container.CurrentDirectory = currentMetadata.Location;
+                     Console.WriteLine($"Change current directory to {_container.CurrentDirectory}");
+                 }
+                 else if (directoryName == "\\")
+                 {
+                     // Връщане към коренната директория
+                     if (_container.CurrentDirectory=="/")
+                     {
+                         Console.WriteLine("Already at the root directory");
+                         return;
+                     }
+                     _container.CurrentDirectory = "/";
+                     Console.WriteLine("Changed directory to root.");
+                 }
+                 else
+                 {
+                     // Смяна към поддиректория
+                      // string newPath = $"{_container.CurrentDirectory}{directoryName}".Replace("//","/") ;
+                    string newPath = Path.Combine(_container.CurrentDirectory, directoryName).Replace("\\", "/");
+
+                     Metadata targetMetadata = _metadataManager.FindDirectoryMetadata(containerStream, newPath);
+
+                     if (targetMetadata == null || targetMetadata.Type != MetadataType.Directory)
+                     {
+                         Console.WriteLine($"Directory {directoryName} no found");
+                         return;
+                     }
+                     _container.CurrentDirectory = newPath;
+                     Console.WriteLine($"Directory changed to {_container.CurrentDirectory}");
+
+                 }
+             }
+             catch (Exception ex)
+             {
+                 throw new Exception($"Error changing the directory:{ex.Message}");
+             }
+         }*/
     }
 }
