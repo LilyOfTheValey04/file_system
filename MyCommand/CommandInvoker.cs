@@ -187,7 +187,7 @@ namespace MyFileSustem.MyCommand
                 return;
             }
             string directoryName = args[1];
-            ICommand rdCommand = new RdCommand(container,directoryManager,directoryName);
+            ICommand rdCommand = new RdCommand(container,directoryManager,metadataManager,fileBlockManager,directoryName);
             rdCommand.Execute();
         }
 

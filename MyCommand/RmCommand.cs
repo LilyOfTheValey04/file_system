@@ -35,14 +35,21 @@ namespace MyFileSustem.MyCommand
                     Console.WriteLine($"Error: File '{containerFileName}' not found in the current directory.");
                     return;
                 }
+                if (fileMetadata.Type == MetadataType.File)
+                {
+                    // Освобождаваме блоковете на файла
+                    fileBlockManager.ClearFileBlocks(containerStream, fileMetadata);
 
-                // Освобождаваме блоковете на файла
-                fileBlockManager.ClearFileBlocks(containerStream, fileMetadata);
+                    // Изтриваме метаданните на файла
+                    metadataManager.ClearMetadata(containerStream, fileMetadata.Offset);
 
-                // Изтриваме метаданните на файла
-                metadataManager.ClearMetadata(containerStream, fileMetadata.Offset);
-
-                Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
+                    Console.WriteLine($"File '{containerFileName}' successfully deleted from the container.");
+                }
+                else 
+                {
+                    Console.WriteLine("Deleting directory can be done only with 'rd' command");
+                    
+                }
             }
             catch (Exception ex)
             {

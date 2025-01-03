@@ -213,32 +213,39 @@ namespace MyFileSustem
             }
         }
 
-        public MyLinkedList<Metadata> GetDirectoryContent (FileStream containerStream, Metadata directoryMetadata)
+        public MyLinkedList<Metadata> GetDirectoryContent(FileStream containerStream, Metadata directoryMetadata)
         {
             MyLinkedList<Metadata> content = new MyLinkedList<Metadata>();
 
             long currentOffset = myContainer.MetadataOffset;
             long metadataRegionEnd = currentOffset + myContainer.MetadataBlockCount * Metadata.MetadataSize;
 
-            while(currentOffset<metadataRegionEnd)
+            while (currentOffset < metadataRegionEnd)
             {
-                containerStream.Seek(currentOffset,SeekOrigin.Begin);
-                Metadata metadata = ReadMetadata(containerStream,currentOffset);
+                containerStream.Seek(currentOffset, SeekOrigin.Begin);
 
-                if (metadata==null)
+                // Прочитаме метаданните
+                Metadata metadata = ReadMetadata(containerStream, currentOffset);
+
+                if (metadata == null)
                 {
+                    // Ако не можем да прочетем метаданни, преминаваме към следващия блок
                     currentOffset += Metadata.MetadataSize;
                     continue;
                 }
 
-                // Проверяваме дали метаданните принадлежат на текущата директория
-                if (metadata.Location==directoryMetadata.Name)
+                // Проверка дали метаданните принадлежат на текущата директория
+                // Възможно е directoryMetadata.Name да не съвпада точно с местоположението, затова добавяме допълнителна логика.
+                if (metadata.Location.Contains(directoryMetadata.Name))  // Добавяме "contains", ако имаме частичен път
                 {
                     content.AddLast(metadata);
                 }
 
+                // Преместваме текущия индекс за метаданните напред
                 currentOffset += Metadata.MetadataSize;
             }
+
+            // Връщаме съдържанието на директорията
             return content;
         }
 
