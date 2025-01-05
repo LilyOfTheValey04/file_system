@@ -121,9 +121,13 @@ namespace MyFileSustem.MyManagers
                         return;
                     }
 
+                    //ToFix
                     string parentPath = Path.GetDirectoryName(_container.CurrentDirectory).Replace("\\", "/");
-                    if (string.IsNullOrEmpty(parentPath))
+                    // if (string.IsNullOrEmpty(parentPath))
+                    if (Utilities.IsItNullorWhiteSpace(parentPath))
+                    {
                         parentPath = "/";
+                    }
 
                     _container.CurrentDirectory = parentPath;
                     Console.WriteLine($"Changed current directory to {_container.CurrentDirectory}");
@@ -144,9 +148,11 @@ namespace MyFileSustem.MyManagers
                 {
                     string currentPath = _container.CurrentDirectory;
 
+                    //ToFix
                     // Проверяваме дали текущата директория завършва с въведеното име
                     if (currentPath.Contains(directoryName))
                     {
+                        //ToFix
                         // Ако да, преминаваме към родителската директория
                         string parentPath = Path.GetDirectoryName(currentPath).Replace("\\", "/");
                         if (string.IsNullOrEmpty(parentPath))
@@ -157,6 +163,7 @@ namespace MyFileSustem.MyManagers
                     }
                     else
                     {
+                        //toFix
                         // Обработваме като относителен път, ако не е част от текущия път
                         string newPath = Path.Combine(currentPath, directoryName).Replace("\\", "/");
 

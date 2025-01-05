@@ -43,6 +43,7 @@ namespace MyFileSustem.MyCommand
                 // Търсене на директорията за изтриване в съдържанието на текущата директория
                 Metadata directoryToDelete = null;
                 var directoryContents = metadataManager.GetDirectoryContent(containerStream, currentDirMetadata);
+
                 foreach (var item in directoryContents)
                 {
                     if (item.Type == MetadataType.Directory && item.Name == directoryName)
@@ -58,7 +59,7 @@ namespace MyFileSustem.MyCommand
                     return;
                 }
 
-                // Рекурсивно изтриване на директорията и съдържанието ѝ
+                // Изтриване на директорията и съдържанието ѝ
                 DeleteDirectoryRec(containerStream, directoryToDelete);
 
                 // Изчистване на метаданните
@@ -72,6 +73,7 @@ namespace MyFileSustem.MyCommand
                 Console.WriteLine($"Error while deleting directory '{directoryName}': {ex.Message}");
             }
         }
+
 
 
         public void DeleteDirectoryRec(FileStream containerStream, Metadata directoryMetadata)
@@ -99,6 +101,8 @@ namespace MyFileSustem.MyCommand
                 }
             }
         }
+
+
 
         public void Undo()
         {

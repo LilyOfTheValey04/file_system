@@ -1,7 +1,9 @@
 ﻿using MyFileSustem.CusLinkedList;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
 
 namespace MyFileSustem
 {
@@ -212,6 +214,41 @@ namespace MyFileSustem
                 MetadataWriter(myContainer.GetContainerStream(), rootDirectory);
             }
         }
+        /*    private bool IsInCurrentDirectory(Metadata metadata, Metadata currentDirMetadata)
+            {
+                // Пълният път към директорията
+                string fullPath = metadata.Location;
+
+                // Ако текущата директория е коренната ("/"), проверяваме дали пътят е директория в коренната директория
+                if (currentDirMetadata.Location == "/")
+                {
+                    return fullPath.StartsWith(currentDirMetadata.Location + "/") && !fullPath.Contains("/");
+                }
+
+                // В противен случай проверяваме дали пътят започва с текущата директория и има поне една допълнителна част (поддиректория)
+                return fullPath.StartsWith(currentDirMetadata.Location + "/");
+            }*/
+        /* private bool IsInCurrentDirectory(Metadata metadata, Metadata currentDirMetadata)
+          {
+              // Пълният път към обекта
+              string objectPath = metadata.Location;
+
+              // Текущата директория
+              string currentPath = currentDirMetadata.Location;
+
+              // Ако текущата директория е коренната "/"
+              if (currentPath == "/")
+              {
+                  // Връщаме true, само ако обектът е директно в корена ("/objectName")
+                  return objectPath.Count(c => c == '/') == 1;
+              }
+
+              // За директории, различни от корена
+              // Проверяваме дали пътят на обекта започва с пътя на текущата директория и е директно вътре в нея
+              return objectPath.StartsWith(currentPath + "/") && objectPath.Count(c => c == '/') == currentPath.Count(c => c == '/') + 1;
+          }*/
+
+
 
         public MyLinkedList<Metadata> GetDirectoryContent(FileStream containerStream, Metadata directoryMetadata)
         {
@@ -248,6 +285,10 @@ namespace MyFileSustem
             // Връщаме съдържанието на директорията
             return content;
         }
+
+
+
+
 
         // Метод за изчистване на метаданните (зануляване) на даден файл
         public void ClearMetadata(FileStream containerStream, long offset)

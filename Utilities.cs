@@ -9,10 +9,10 @@ namespace MyFileSustem
 {
     public static class Utilities
     {
-        
+
         public static bool IsItNullorWhiteSpace(string input)
         {
-            if (input == null) 
+            if (input == null)
             {
                 return true;
             }
@@ -31,34 +31,34 @@ namespace MyFileSustem
             return c == ' ' || c == '\f' || c == '\v' || c == '\t' || c == '\n' || c == '\r';
         }
 
-        public static bool EndWith (string input,string suffix)
+        public static bool EndWith(string input, string suffix)
         {
             if (input == null || suffix == null)
             {
                 return false;
             }
-            if (input.Length<suffix.Length)
+            if (input.Length < suffix.Length)
             {
                 return false;
             }
             for (int i = 0; i < suffix.Length; i++)
             {
-            //check if +/- i
+                //check if +/- i
                 if (input[input.Length - suffix.Length - i] != suffix[i])
                 {
                     return false;
-                } 
+                }
             }
             return true;
         }
 
         public static string MyJoin(string seperator, IEnumerable<string> values)
         {
-            if (values==null)
+            if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
-            if (seperator==null)
+            if (seperator == null)
             {
                 seperator = string.Empty;
             }
@@ -66,7 +66,7 @@ namespace MyFileSustem
             StringBuilder result = new StringBuilder();
             bool isfirst = true;
 
-            foreach (string value in values) 
+            foreach (string value in values)
             {
                 if (!isfirst)
                 {
@@ -81,7 +81,7 @@ namespace MyFileSustem
 
         public static string CustomTrim(string input)
         {
-            if (input==null)
+            if (input == null)
             {
                 return null;
             }
@@ -103,59 +103,60 @@ namespace MyFileSustem
 
             // Върнете подниза между start и end (включително)
             string result = "";
-            for(int i =start; i<=end;i++)
+            for (int i = start; i <= end; i++)
             {
-                result += input[i]; 
+                result += input[i];
             }
             return result;
         }
 
-         public static string CustomToLower(string input)
-         {
-             if(input==null)
-             {
-                 return null;
-             }
+        public static string CustomToLower(string input)
+        {
+            if (input == null)
+            {
+                return null;
+            }
 
-             char[] result = new char[input.Length];
-             for (int i = 0; i < result.Length; i++)
-             {
-                 char c = input[i];
-                 if (c>='A'&& c<='Z')
-                 {
-                     result[i] = (char)(c+('a' - 'A'));
-                 }
-                 else
-                 {
-                     // Ако не е главна буква, запазваме го без промяна
-                     result[i] = c;
-                 }
-             }
-             return new string (result);
-         }
+            char[] result = new char[input.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                char c = input[i];
+                if (c >= 'A' && c <= 'Z')
+                {
+                    result[i] = (char)(c + ('a' - 'A'));
+                }
+                else
+                {
+                    // Ако не е главна буква, запазваме го без промяна
+                    result[i] = c;
+                }
+            }
+            return new string(result);
+        }
 
         public static string[] CustomSplit(string input, char delimiter)
         {
-            if (input==null)
+            if (input == null)
             {
                 return null;
             }
 
             MyLinkedList<string> result = new MyLinkedList<string>();
             string currentSegment = "";
-            for (int i = 0; i < input.Length; i++) {
-                if (input[i] ==delimiter)
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (input[i] == delimiter)
                 {
                     result.AddLast(currentSegment);
                     currentSegment = "";
                 }
                 else
                 {
-                    currentSegment+=(input[i]);
+                    currentSegment += (input[i]);
                 }
             }
             // Добавяме последния сегмент, ако има такъв
-            if (currentSegment!="")
+            if (currentSegment != "")
             {
                 result.AddLast(currentSegment);
             }
@@ -171,20 +172,40 @@ namespace MyFileSustem
             }
 
             // Разделяме входа на базата на разделителя
-            string[] segments= CustomSplit(input, delimiter);
+            string[] segments = CustomSplit(input, delimiter);
             MyLinkedList<string> result = new MyLinkedList<string>();
             foreach (var segment in segments)
             {
                 if (!IsItNullorWhiteSpace(segment))
                 {
-                  result.AddLast(segment);
+                    result.AddLast(segment);
                 }
             }
 
             return result.ToArray();
         }
 
-        
+        public static string CustomReplace(string input, char oldChar, char newChar)
+        {
+            if (input == null) { return null; }
+            if (input.Length == 0) { return ""; }
+            char[] result = new char[input.Length];
+
+            for (int i = 0; i < input.Length; i++)
+           
+            {
+                if (input[i] == oldChar)
+                {
+                    result[i] = newChar;
+                }
+                else
+                {
+                    result[i] = input[i];
+                }
+            }
+            return new string (result);
+        }
+
 
 
 

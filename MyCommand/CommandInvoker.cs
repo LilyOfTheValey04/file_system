@@ -34,7 +34,9 @@ namespace MyFileSustem.MyCommand
             }
 
             // Първият аргумент е името на командата
-            string commandName = args[0].ToLower();
+
+           // string commandName = args[0].ToLower();
+           string commandName=Utilities.CustomToLower(args[0]);
             try
             {
                 switch (commandName)
